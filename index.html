@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Customizable Dashboard</title>
+<title>My Custom Dashboard</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -19,6 +19,7 @@
     background: #333;
     color: #fff;
     padding: 10px 20px;
+    position: relative;
   }
 
   header h1 {
@@ -26,19 +27,22 @@
     display: inline-block;
   }
 
-  #config-button {
-    float: right;
+  #add-tile-button {
+    position: absolute;
+    right: 20px;
+    top: 10px;
     background: #444;
     border: none;
     color: #fff;
     padding: 5px 10px;
     cursor: pointer;
+    font-size: 18px;
   }
 
   #dashboard {
     flex: 1;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 20px;
     padding: 20px;
     overflow-y: auto;
@@ -49,10 +53,7 @@
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     padding: 20px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
+    position: relative;
   }
   .tile h2 {
     margin: 0 0 10px;
@@ -67,14 +68,55 @@
     font-size: 0.8em;
     color: #999;
     margin-top: 10px;
+    text-align: center;
+  }
+
+  .tile-menu-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+  }
+
+  .tile-menu {
+    position: absolute;
+    top: 35px;
+    right: 10px;
+    background: #fff;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    border-radius: 4px;
+    display: none;
+    z-index: 100;
+  }
+
+  .tile-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .tile-menu li {
+    padding: 8px 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+  }
+  .tile-menu li:last-child {
+    border-bottom: none;
+  }
+  .tile-menu li:hover {
+    background: #f0f0f0;
   }
 
   footer p {
     margin: 0;
   }
 
-  /* Config Panel (modal) */
-  #config-panel-overlay {
+  /* Modal Overlay */
+  .overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -86,20 +128,23 @@
     justify-content:center;
     z-index: 9999;
   }
-  #config-panel {
+
+  .modal {
     background: #fff;
     border-radius: 8px;
     width: 90%;
-    max-width: 600px;
+    max-width: 500px;
     padding: 20px;
     position: relative;
     max-height: 90vh;
     overflow-y: auto;
   }
-  #config-panel h2 {
-    margin-top: 0;
+
+  .modal h2 {
+    margin-top:0;
   }
-  #config-close {
+
+  .close-modal {
     position:absolute;
     top:10px;
     right:10px;
@@ -108,46 +153,53 @@
     font-size:1.2em;
     cursor:pointer;
   }
-  .tile-config {
-    margin-bottom:20px;
-    border-bottom:1px solid #ccc;
-    padding-bottom:10px;
-  }
-  .tile-config:last-child {
-    border-bottom:none;
-  }
-  .tile-config h3 {
-    margin:0 0 10px;
-  }
-  .tile-config label {
+
+  .tile-config-modal label {
     display:block;
-    font-size:0.9em;
-    margin:5px 0 3px;
+    margin-top:10px;
   }
-  .tile-config input[type="text"], 
-  .tile-config input[type="number"], 
-  .tile-config select, 
-  .tile-config textarea {
+
+  .tile-config-modal input[type="text"],
+  .tile-config-modal input[type="number"],
+  .tile-config-modal textarea,
+  .tile-config-modal select {
     width:100%;
     margin-bottom:5px;
-    box-sizing: border-box;
+    box-sizing:border-box;
   }
-  #save-config {
-    background: #333;
+
+  .tile-config-modal button {
+    background:#333;
     color:#fff;
-    padding:10px 20px;
     border:none;
+    padding:10px 20px;
     cursor:pointer;
+    margin-top:20px;
     float:right;
-    margin-top: 20px;
   }
+
+  /* Add Tile Modal */
+  .add-tile-list ul {
+    list-style:none;
+    padding:0;
+    margin:0;
+  }
+  .add-tile-list li {
+    padding:10px;
+    border-bottom:1px solid #eee;
+    cursor:pointer;
+  }
+  .add-tile-list li:hover {
+    background:#f0f0f0;
+  }
+
 </style>
 </head>
 <body>
 
 <header>
   <h1>My Custom Dashboard</h1>
-  <button id="config-button">Configure</button>
+  <button id="add-tile-button">+</button>
 </header>
 
 <div id="dashboard"></div>
@@ -156,19 +208,35 @@
   <p>&copy; 2024 My Dashboard</p>
 </footer>
 
-<div id="config-panel-overlay">
-  <div id="config-panel">
-    <button id="config-close">&times;</button>
-    <h2>Dashboard Configuration</h2>
+<!-- Modals -->
+<div class="overlay" id="add-tile-overlay">
+  <div class="modal add-tile-list">
+    <button class="close-modal" id="close-add-tile">&times;</button>
+    <h2>Add a New Tile</h2>
+    <ul>
+      <li data-tile-type="weather">Weather Tile</li>
+      <li data-tile-type="stock">Stock Tile</li>
+      <li data-tile-type="rss">RSS News Tile</li>
+      <li data-tile-type="quote">Quote Tile</li>
+      <li data-tile-type="crypto">Crypto Tile</li>
+      <li data-tile-type="notes">Notes Tile</li>
+      <li data-tile-type="clock">Clock Tile</li>
+    </ul>
+  </div>
+</div>
+
+<div class="overlay" id="config-overlay">
+  <div class="modal tile-config-modal">
+    <button class="close-modal" id="close-config-modal">&times;</button>
+    <h2>Configure Tile</h2>
     <form id="config-form"></form>
     <button id="save-config">Save</button>
   </div>
 </div>
 
 <script>
-  // ========== Initial Tiles Config ==========
-  // Added a variety of tiles to the "library"
-  // Some are visible by default, others are not. 
+  // ========== INITIAL CONFIG ==========
+  // Default tiles (just weather and stock visible at first)
   let tilesConfig = {
     tiles: [
       {
@@ -189,53 +257,10 @@
           symbol: "AAPL",
           apiKey: "YOUR_FINNHUB_API_KEY"
         }
-      },
-      {
-        id: "rss-1",
-        type: "rss",
-        visible: false,
-        config: {
-          url: "https://api.rss2json.com/v1/api.json?rss_url=https://news.google.com/rss",
-          limit: 5
-        }
-      },
-      {
-        id: "quote-1",
-        type: "quote",
-        visible: false,
-        config: {
-          // no special config needed, but we could add a refresh interval if desired
-        }
-      },
-      {
-        id: "crypto-1",
-        type: "crypto",
-        visible: false,
-        config: {
-          coinId: "bitcoin",
-          currency: "usd"
-        }
-      },
-      {
-        id: "notes-1",
-        type: "notes",
-        visible: false,
-        config: {
-          text: "Enter your notes here..."
-        }
-      },
-      {
-        id: "clock-1",
-        type: "clock",
-        visible: false,
-        config: {
-          format: "24h" // or "12h"
-        }
       }
     ]
   };
 
-  // Load from localStorage if available
   const savedConfig = localStorage.getItem("dashboardConfig");
   if (savedConfig) {
     tilesConfig = JSON.parse(savedConfig);
@@ -243,8 +268,7 @@
 
   const dashboard = document.getElementById("dashboard");
 
-  // ========== Data Fetch Functions ==========
-
+  // ========== DATA FETCH FUNCTIONS ==========
   async function fetchWeather(tile) {
     const {city, countryCode, apiKey} = tile.config;
     const url = `https://api.openweathermap.org/data/2.5/weather?q=${city},${countryCode}&units=metric&appid=${apiKey}`;
@@ -266,7 +290,6 @@
     const response = await fetch(url);
     if (!response.ok) throw new Error("RSS fetch error");
     const data = await response.json();
-    // data.items should contain articles. We'll just slice by 'limit'
     return data.items.slice(0, limit);
   }
 
@@ -285,88 +308,6 @@
     return await response.json();
   }
 
-  // Clock tile doesn’t need fetch data, just shows current time
-
-  // ========== Render Tiles ==========
-  async function renderTiles() {
-    dashboard.innerHTML = '';
-    for (let tile of tilesConfig.tiles) {
-      if (!tile.visible) continue;
-      const tileEl = document.createElement("div");
-      tileEl.className = "tile";
-
-      try {
-        if (tile.type === "weather") {
-          tileEl.innerHTML = `<h2>Weather</h2><p>Loading...</p>`;
-          const data = await fetchWeather(tile);
-          tileEl.innerHTML = `
-            <h2>Weather</h2>
-            <p><strong>${data.name}, ${data.sys.country}</strong></p>
-            <p>${Math.round(data.main.temp)} °C, ${data.weather[0].description}</p>
-            <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
-          `;
-
-        } else if (tile.type === "stock") {
-          tileEl.innerHTML = `<h2>Stock: ${tile.config.symbol}</h2><p>Loading...</p>`;
-          const data = await fetchStock(tile);
-          tileEl.innerHTML = `
-            <h2>Stock: ${tile.config.symbol}</h2>
-            <p>Price: $${data.c.toFixed(2)}</p>
-            <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
-          `;
-
-        } else if (tile.type === "rss") {
-          tileEl.innerHTML = `<h2>News</h2><p>Loading...</p>`;
-          const articles = await fetchRSS(tile);
-          let html = `<h2>News</h2>`;
-          articles.forEach(a => {
-            html += `<p><a href="${a.link}" target="_blank">${a.title}</a></p>`;
-          });
-          html += `<div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>`;
-          tileEl.innerHTML = html;
-
-        } else if (tile.type === "quote") {
-          tileEl.innerHTML = `<h2>Quote</h2><p>Loading...</p>`;
-          const data = await fetchQuote(tile);
-          tileEl.innerHTML = `
-            <h2>Quote</h2>
-            <p>"${data.content}"<br>- ${data.author}</p>
-            <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
-          `;
-
-        } else if (tile.type === "crypto") {
-          tileEl.innerHTML = `<h2>Crypto: ${tile.config.coinId}</h2><p>Loading...</p>`;
-          const data = await fetchCrypto(tile);
-          const price = data[tile.config.coinId][tile.config.currency];
-          tileEl.innerHTML = `
-            <h2>${tile.config.coinId.charAt(0).toUpperCase() + tile.config.coinId.slice(1)} Price</h2>
-            <p>${price} ${tile.config.currency.toUpperCase()}</p>
-            <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
-          `;
-
-        } else if (tile.type === "notes") {
-          tileEl.innerHTML = `
-            <h2>Notes</h2>
-            <p>${tile.config.text.replace(/\n/g, "<br>")}</p>
-          `;
-
-        } else if (tile.type === "clock") {
-          tileEl.innerHTML = `<h2>Clock</h2><p id="clock-${tile.id}">Loading...</p>`;
-          updateClock(tile, tileEl.querySelector(`#clock-${tile.id}`));
-          setInterval(() => updateClock(tile, tileEl.querySelector(`#clock-${tile.id}`)), 1000);
-
-        } else {
-          tileEl.innerHTML = `<h2>Unknown Tile</h2>`;
-        }
-      } catch (err) {
-        tileEl.innerHTML += `<p>Error loading data</p>`;
-        console.error(err);
-      }
-
-      dashboard.appendChild(tileEl);
-    }
-  }
-
   function updateClock(tile, el) {
     const now = new Date();
     let hours = now.getHours();
@@ -382,124 +323,361 @@
     }
   }
 
-  // ========== Configuration Panel ==========
-  const configOverlay = document.getElementById("config-panel-overlay");
-  const configButton = document.getElementById("config-button");
-  const configClose = document.getElementById("config-close");
-  const configForm = document.getElementById("config-form");
-  const saveConfigButton = document.getElementById("save-config");
+  // ========== RENDER TILES ==========
+  async function renderTiles() {
+    dashboard.innerHTML = '';
+    for (let tile of tilesConfig.tiles) {
+      if (!tile.visible) continue;
+      const tileEl = document.createElement("div");
+      tileEl.className = "tile";
 
-  function openConfigPanel() {
-    configForm.innerHTML = '';
-    tilesConfig.tiles.forEach(tile => {
-      const tileDiv = document.createElement("div");
-      tileDiv.className = "tile-config";
+      // Three-dot menu button
+      const menuButton = document.createElement("button");
+      menuButton.className = "tile-menu-button";
+      menuButton.textContent = "⋮";
+      tileEl.appendChild(menuButton);
 
-      tileDiv.innerHTML = `<h3>${tile.type.charAt(0).toUpperCase() + tile.type.slice(1)} Tile</h3>
-        <label><input type="checkbox" name="visible-${tile.id}" ${tile.visible ? 'checked' : ''}> Visible</label>`;
+      // Tile menu
+      const tileMenu = document.createElement("div");
+      tileMenu.className = "tile-menu";
+      tileMenu.innerHTML = `
+        <ul>
+          <li class="configure-tile">Configure</li>
+          <li class="move-tile">Move</li>
+          <li class="remove-tile">Remove</li>
+        </ul>
+      `;
+      tileEl.appendChild(tileMenu);
 
-      // Add fields depending on tile type
-      if (tile.type === "weather") {
-        tileDiv.innerHTML += `
-          <label>City:</label>
-          <input type="text" name="city-${tile.id}" value="${tile.config.city}">
-          <label>Country Code:</label>
-          <input type="text" name="country-${tile.id}" value="${tile.config.countryCode}">
-          <label>API Key:</label>
-          <input type="text" name="weatherKey-${tile.id}" value="${tile.config.apiKey}">
-        `;
-      } else if (tile.type === "stock") {
-        tileDiv.innerHTML += `
-          <label>Symbol:</label>
-          <input type="text" name="symbol-${tile.id}" value="${tile.config.symbol}">
-          <label>API Key:</label>
-          <input type="text" name="stockKey-${tile.id}" value="${tile.config.apiKey}">
-        `;
-      } else if (tile.type === "rss") {
-        tileDiv.innerHTML += `
-          <label>RSS URL (JSON):</label>
-          <input type="text" name="rssUrl-${tile.id}" value="${tile.config.url}">
-          <label>Limit:</label>
-          <input type="number" name="rssLimit-${tile.id}" value="${tile.config.limit}">
-        `;
-      } else if (tile.type === "quote") {
-        // No extra config necessary, but we could add refresh interval if desired
-        tileDiv.innerHTML += `<p>No additional config needed.</p>`;
-      } else if (tile.type === "crypto") {
-        tileDiv.innerHTML += `
-          <label>Coin ID (e.g., bitcoin):</label>
-          <input type="text" name="coinId-${tile.id}" value="${tile.config.coinId}">
-          <label>Currency (e.g., usd):</label>
-          <input type="text" name="currency-${tile.id}" value="${tile.config.currency}">
-        `;
-      } else if (tile.type === "notes") {
-        tileDiv.innerHTML += `
-          <label>Notes:</label>
-          <textarea name="notesText-${tile.id}" rows="5">${tile.config.text}</textarea>
-        `;
-      } else if (tile.type === "clock") {
-        tileDiv.innerHTML += `
-          <label>Format:</label>
-          <select name="clockFormat-${tile.id}">
-            <option value="24h" ${tile.config.format === "24h" ? 'selected' : ''}>24-hour</option>
-            <option value="12h" ${tile.config.format === "12h" ? 'selected' : ''}>12-hour</option>
-          </select>
-        `;
+      menuButton.addEventListener("click", (e) => {
+        e.stopPropagation();
+        // Toggle the menu
+        tileMenu.style.display = (tileMenu.style.display === "block") ? "none" : "block";
+      });
+
+      document.addEventListener("click", () => {
+        tileMenu.style.display = "none";
+      });
+
+      // Menu actions
+      tileMenu.querySelector(".configure-tile").addEventListener("click", () => {
+        tileMenu.style.display = "none";
+        openConfigModal(tile);
+      });
+      tileMenu.querySelector(".move-tile").addEventListener("click", () => {
+        tileMenu.style.display = "none";
+        alert("Move functionality not implemented yet.");
+      });
+      tileMenu.querySelector(".remove-tile").addEventListener("click", () => {
+        tileMenu.style.display = "none";
+        removeTile(tile.id);
+      });
+
+      // Load tile content
+      try {
+        let content = '';
+        if (tile.type === "weather") {
+          tileEl.innerHTML += `<h2>Weather</h2><p>Loading...</p>`;
+          const data = await fetchWeather(tile);
+          tileEl.innerHTML = `
+            <button class="tile-menu-button">⋮</button>
+            <div class="tile-menu" style="display:none;">
+              <ul>
+                <li class="configure-tile">Configure</li>
+                <li class="move-tile">Move</li>
+                <li class="remove-tile">Remove</li>
+              </ul>
+            </div>
+            <h2>Weather</h2>
+            <p><strong>${data.name}, ${data.sys.country}</strong></p>
+            <p>${Math.round(data.main.temp)} °C, ${data.weather[0].description}</p>
+            <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
+          `;
+        } else if (tile.type === "stock") {
+          tileEl.innerHTML += `<h2>Stock: ${tile.config.symbol}</h2><p>Loading...</p>`;
+          const data = await fetchStock(tile);
+          tileEl.innerHTML = `
+            <button class="tile-menu-button">⋮</button>
+            <div class="tile-menu" style="display:none;">
+              <ul>
+                <li class="configure-tile">Configure</li>
+                <li class="move-tile">Move</li>
+                <li class="remove-tile">Remove</li>
+              </ul>
+            </div>
+            <h2>Stock: ${tile.config.symbol}</h2>
+            <p>Price: $${data.c.toFixed(2)}</p>
+            <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
+          `;
+        } else if (tile.type === "rss") {
+          tileEl.innerHTML += `<h2>News</h2><p>Loading...</p>`;
+          const articles = await fetchRSS(tile);
+          let html = `
+            <button class="tile-menu-button">⋮</button>
+            <div class="tile-menu" style="display:none;">
+              <ul>
+                <li class="configure-tile">Configure</li>
+                <li class="move-tile">Move</li>
+                <li class="remove-tile">Remove</li>
+              </ul>
+            </div>
+            <h2>News</h2>`;
+          articles.forEach(a => {
+            html += `<p><a href="${a.link}" target="_blank">${a.title}</a></p>`;
+          });
+          html += `<div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>`;
+          tileEl.innerHTML = html;
+        } else if (tile.type === "quote") {
+          tileEl.innerHTML += `<h2>Quote</h2><p>Loading...</p>`;
+          const data = await fetchQuote(tile);
+          tileEl.innerHTML = `
+            <button class="tile-menu-button">⋮</button>
+            <div class="tile-menu" style="display:none;">
+              <ul>
+                <li class="configure-tile">Configure</li>
+                <li class="move-tile">Move</li>
+                <li class="remove-tile">Remove</li>
+              </ul>
+            </div>
+            <h2>Quote</h2>
+            <p>"${data.content}"<br>- ${data.author}</p>
+            <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
+          `;
+        } else if (tile.type === "crypto") {
+          tileEl.innerHTML += `<h2>Crypto: ${tile.config.coinId}</h2><p>Loading...</p>`;
+          const data = await fetchCrypto(tile);
+          const price = data[tile.config.coinId][tile.config.currency];
+          tileEl.innerHTML = `
+            <button class="tile-menu-button">⋮</button>
+            <div class="tile-menu" style="display:none;">
+              <ul>
+                <li class="configure-tile">Configure</li>
+                <li class="move-tile">Move</li>
+                <li class="remove-tile">Remove</li>
+              </ul>
+            </div>
+            <h2>${tile.config.coinId.charAt(0).toUpperCase() + tile.config.coinId.slice(1)} Price</h2>
+            <p>${price} ${tile.config.currency.toUpperCase()}</p>
+            <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
+          `;
+        } else if (tile.type === "notes") {
+          tileEl.innerHTML = `
+            <button class="tile-menu-button">⋮</button>
+            <div class="tile-menu" style="display:none;">
+              <ul>
+                <li class="configure-tile">Configure</li>
+                <li class="move-tile">Move</li>
+                <li class="remove-tile">Remove</li>
+              </ul>
+            </div>
+            <h2>Notes</h2>
+            <p>${tile.config.text.replace(/\n/g, "<br>")}</p>
+          `;
+        } else if (tile.type === "clock") {
+          tileEl.innerHTML = `
+            <button class="tile-menu-button">⋮</button>
+            <div class="tile-menu" style="display:none;">
+              <ul>
+                <li class="configure-tile">Configure</li>
+                <li class="move-tile">Move</li>
+                <li class="remove-tile">Remove</li>
+              </ul>
+            </div>
+            <h2>Clock</h2>
+            <p id="clock-${tile.id}"></p>
+          `;
+          const clockEl = tileEl.querySelector(`#clock-${tile.id}`);
+          updateClock(tile, clockEl);
+          setInterval(() => updateClock(tile, clockEl), 1000);
+        }
+
+        // Re-attach menu handlers (since we replaced innerHTML)
+        const replacedMenuButton = tileEl.querySelector(".tile-menu-button");
+        const replacedTileMenu = tileEl.querySelector(".tile-menu");
+        replacedMenuButton.addEventListener("click", (e) => {
+          e.stopPropagation();
+          replacedTileMenu.style.display = replacedTileMenu.style.display === "block" ? "none" : "block";
+        });
+        document.addEventListener("click", () => {
+          replacedTileMenu.style.display = "none";
+        });
+        replacedTileMenu.querySelector(".configure-tile").addEventListener("click", () => {
+          replacedTileMenu.style.display = "none";
+          openConfigModal(tile);
+        });
+        replacedTileMenu.querySelector(".move-tile").addEventListener("click", () => {
+          replacedTileMenu.style.display = "none";
+          alert("Move functionality not implemented yet.");
+        });
+        replacedTileMenu.querySelector(".remove-tile").addEventListener("click", () => {
+          replacedTileMenu.style.display = "none";
+          removeTile(tile.id);
+        });
+
+      } catch (err) {
+        tileEl.innerHTML += `<p>Error loading data</p>`;
+        console.error(err);
       }
 
-      configForm.appendChild(tileDiv);
+      dashboard.appendChild(tileEl);
+    }
+  }
+
+  function removeTile(id) {
+    tilesConfig.tiles = tilesConfig.tiles.filter(t => t.id !== id);
+    saveConfig();
+    renderTiles();
+  }
+
+  // ========== ADD TILE FUNCTIONALITY ==========
+  const addTileOverlay = document.getElementById("add-tile-overlay");
+  const closeAddTileBtn = document.getElementById("close-add-tile");
+  const addTileButton = document.getElementById("add-tile-button");
+
+  addTileButton.addEventListener("click", () => {
+    addTileOverlay.style.display = "flex";
+  });
+  closeAddTileBtn.addEventListener("click", () => {
+    addTileOverlay.style.display = "none";
+  });
+
+  document.querySelectorAll(".add-tile-list li").forEach(li => {
+    li.addEventListener("click", () => {
+      const type = li.getAttribute("data-tile-type");
+      addNewTile(type);
+      addTileOverlay.style.display = "none";
     });
+  });
+
+  function addNewTile(type) {
+    const id = type + "-" + Date.now();
+    const config = getDefaultConfigForTileType(type);
+    tilesConfig.tiles.push({
+      id: id,
+      type: type,
+      visible: true,
+      config: config
+    });
+    saveConfig();
+    renderTiles();
+  }
+
+  function getDefaultConfigForTileType(type) {
+    if (type === "weather") {
+      return { city: "New York", countryCode: "US", apiKey: "YOUR_OPENWEATHER_API_KEY" };
+    } else if (type === "stock") {
+      return { symbol: "AAPL", apiKey: "YOUR_FINNHUB_API_KEY" };
+    } else if (type === "rss") {
+      return { url: "https://api.rss2json.com/v1/api.json?rss_url=https://news.google.com/rss", limit: 5 };
+    } else if (type === "quote") {
+      return {};
+    } else if (type === "crypto") {
+      return { coinId: "bitcoin", currency: "usd" };
+    } else if (type === "notes") {
+      return { text: "Enter your notes here..." };
+    } else if (type === "clock") {
+      return { format: "24h" };
+    }
+    return {};
+  }
+
+  // ========== CONFIGURE TILE MODAL ==========
+  const configOverlay = document.getElementById("config-overlay");
+  const closeConfigModalBtn = document.getElementById("close-config-modal");
+  const configForm = document.getElementById("config-form");
+  const saveConfigBtn = document.getElementById("save-config");
+
+  let currentConfigTile = null;
+
+  function openConfigModal(tile) {
+    currentConfigTile = tile;
+    configForm.innerHTML = '';
+
+    // Generate fields based on tile type
+    if (tile.type === "weather") {
+      configForm.innerHTML = `
+        <label>City:</label>
+        <input type="text" name="city" value="${tile.config.city}">
+        <label>Country Code:</label>
+        <input type="text" name="countryCode" value="${tile.config.countryCode}">
+        <label>API Key:</label>
+        <input type="text" name="apiKey" value="${tile.config.apiKey}">
+      `;
+    } else if (tile.type === "stock") {
+      configForm.innerHTML = `
+        <label>Symbol:</label>
+        <input type="text" name="symbol" value="${tile.config.symbol}">
+        <label>API Key:</label>
+        <input type="text" name="apiKey" value="${tile.config.apiKey}">
+      `;
+    } else if (tile.type === "rss") {
+      configForm.innerHTML = `
+        <label>RSS URL (JSON):</label>
+        <input type="text" name="url" value="${tile.config.url}">
+        <label>Limit:</label>
+        <input type="number" name="limit" value="${tile.config.limit}">
+      `;
+    } else if (tile.type === "quote") {
+      configForm.innerHTML = `<p>No additional configuration needed.</p>`;
+    } else if (tile.type === "crypto") {
+      configForm.innerHTML = `
+        <label>Coin ID:</label>
+        <input type="text" name="coinId" value="${tile.config.coinId}">
+        <label>Currency:</label>
+        <input type="text" name="currency" value="${tile.config.currency}">
+      `;
+    } else if (tile.type === "notes") {
+      configForm.innerHTML = `
+        <label>Notes:</label>
+        <textarea name="text" rows="5">${tile.config.text}</textarea>
+      `;
+    } else if (tile.type === "clock") {
+      configForm.innerHTML = `
+        <label>Format:</label>
+        <select name="format">
+          <option value="24h" ${tile.config.format === "24h" ? 'selected' : ''}>24-hour</option>
+          <option value="12h" ${tile.config.format === "12h" ? 'selected' : ''}>12-hour</option>
+        </select>
+      `;
+    }
 
     configOverlay.style.display = "flex";
   }
 
-  function closeConfigPanel() {
+  closeConfigModalBtn.addEventListener("click", () => {
     configOverlay.style.display = "none";
-  }
+    currentConfigTile = null;
+  });
+
+  saveConfigBtn.addEventListener("click", () => {
+    if (!currentConfigTile) return;
+    const formData = new FormData(configForm);
+
+    // Update tile config
+    for (let [key, value] of formData.entries()) {
+      // Convert limit to number if rss
+      if (currentConfigTile.type === "rss" && key === "limit") {
+        value = parseInt(value, 10);
+      }
+      currentConfigTile.config[key] = value;
+    }
+
+    saveConfig();
+    configOverlay.style.display = "none";
+    currentConfigTile = null;
+    renderTiles();
+  });
+
+  // ========== SAVE CONFIG ==========
 
   function saveConfig() {
-    // Read form values and update tilesConfig
-    tilesConfig.tiles = tilesConfig.tiles.map(tile => {
-      const form = new FormData(configForm.closest('form') || configForm);
-      const visible = form.get(`visible-${tile.id}`) !== null;
-      tile.visible = visible;
-
-      if (tile.type === "weather") {
-        tile.config.city = form.get(`city-${tile.id}`);
-        tile.config.countryCode = form.get(`country-${tile.id}`);
-        tile.config.apiKey = form.get(`weatherKey-${tile.id}`);
-      } else if (tile.type === "stock") {
-        tile.config.symbol = form.get(`symbol-${tile.id}`);
-        tile.config.apiKey = form.get(`stockKey-${tile.id}`);
-      } else if (tile.type === "rss") {
-        tile.config.url = form.get(`rssUrl-${tile.id}`);
-        tile.config.limit = parseInt(form.get(`rssLimit-${tile.id}`), 10);
-      } else if (tile.type === "crypto") {
-        tile.config.coinId = form.get(`coinId-${tile.id}`);
-        tile.config.currency = form.get(`currency-${tile.id}`);
-      } else if (tile.type === "notes") {
-        tile.config.text = form.get(`notesText-${tile.id}`);
-      } else if (tile.type === "clock") {
-        tile.config.format = form.get(`clockFormat-${tile.id}`);
-      }
-
-      return tile;
-    });
-
-    // Save to localStorage
     localStorage.setItem("dashboardConfig", JSON.stringify(tilesConfig));
-    closeConfigPanel();
-    renderTiles();
   }
-
-  configButton.addEventListener("click", openConfigPanel);
-  configClose.addEventListener("click", closeConfigPanel);
-  saveConfigButton.addEventListener("click", saveConfig);
 
   // Initial render
   renderTiles();
 
-  // Optional: Refresh all tiles every 5 minutes (for tiles like weather, stocks, RSS, quote, crypto)
+  // Optional: Refresh data every 5 minutes
   setInterval(renderTiles, 5 * 60 * 1000);
 </script>
 
