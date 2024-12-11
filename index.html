@@ -23,6 +23,16 @@
 
   header h1 {
     margin: 0;
+    display: inline-block;
+  }
+
+  #config-button {
+    float: right;
+    background: #444;
+    border: none;
+    color: #fff;
+    padding: 5px 10px;
+    cursor: pointer;
   }
 
   #dashboard {
@@ -41,7 +51,7 @@
     padding: 20px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
   }
   .tile h2 {
@@ -51,6 +61,7 @@
   }
   .tile p {
     margin: 5px 0;
+    text-align: center;
   }
   .updated {
     font-size: 0.8em;
@@ -58,13 +69,8 @@
     margin-top: 10px;
   }
 
-  #config-button {
-    float: right;
-    background: #444;
-    border: none;
-    color: #fff;
-    padding: 5px 10px;
-    cursor: pointer;
+  footer p {
+    margin: 0;
   }
 
   /* Config Panel (modal) */
@@ -78,6 +84,7 @@
     display: none;
     align-items:center;
     justify-content:center;
+    z-index: 9999;
   }
   #config-panel {
     background: #fff;
@@ -86,6 +93,8 @@
     max-width: 600px;
     padding: 20px;
     position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
   }
   #config-panel h2 {
     margin-top: 0;
@@ -110,14 +119,18 @@
   .tile-config h3 {
     margin:0 0 10px;
   }
-  .tile-config input[type="text"] {
-    width:100%;
-    margin-bottom:5px;
-  }
   .tile-config label {
     display:block;
     font-size:0.9em;
     margin:5px 0 3px;
+  }
+  .tile-config input[type="text"], 
+  .tile-config input[type="number"], 
+  .tile-config select, 
+  .tile-config textarea {
+    width:100%;
+    margin-bottom:5px;
+    box-sizing: border-box;
   }
   #save-config {
     background: #333;
@@ -126,6 +139,7 @@
     border:none;
     cursor:pointer;
     float:right;
+    margin-top: 20px;
   }
 </style>
 </head>
@@ -153,11 +167,8 @@
 
 <script>
   // ========== Initial Tiles Config ==========
-  // This could be loaded from a server or local file if desired.
-  // Each tile has:
-  //   type: 'weather', 'stock', ...
-  //   visible: boolean
-  //   config: object with specific fields for that tile
+  // Added a variety of tiles to the "library"
+  // Some are visible by default, others are not. 
   let tilesConfig = {
     tiles: [
       {
@@ -178,6 +189,48 @@
           symbol: "AAPL",
           apiKey: "YOUR_FINNHUB_API_KEY"
         }
+      },
+      {
+        id: "rss-1",
+        type: "rss",
+        visible: false,
+        config: {
+          url: "https://api.rss2json.com/v1/api.json?rss_url=https://news.google.com/rss",
+          limit: 5
+        }
+      },
+      {
+        id: "quote-1",
+        type: "quote",
+        visible: false,
+        config: {
+          // no special config needed, but we could add a refresh interval if desired
+        }
+      },
+      {
+        id: "crypto-1",
+        type: "crypto",
+        visible: false,
+        config: {
+          coinId: "bitcoin",
+          currency: "usd"
+        }
+      },
+      {
+        id: "notes-1",
+        type: "notes",
+        visible: false,
+        config: {
+          text: "Enter your notes here..."
+        }
+      },
+      {
+        id: "clock-1",
+        type: "clock",
+        visible: false,
+        config: {
+          format: "24h" // or "12h"
+        }
       }
     ]
   };
@@ -188,7 +241,10 @@
     tilesConfig = JSON.parse(savedConfig);
   }
 
+  const dashboard = document.getElementById("dashboard");
+
   // ========== Data Fetch Functions ==========
+
   async function fetchWeather(tile) {
     const {city, countryCode, apiKey} = tile.config;
     const url = `https://api.openweathermap.org/data/2.5/weather?q=${city},${countryCode}&units=metric&appid=${apiKey}`;
@@ -205,9 +261,33 @@
     return await response.json();
   }
 
-  // ========== Render Tiles ==========
-  const dashboard = document.getElementById("dashboard");
+  async function fetchRSS(tile) {
+    const {url, limit} = tile.config;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("RSS fetch error");
+    const data = await response.json();
+    // data.items should contain articles. We'll just slice by 'limit'
+    return data.items.slice(0, limit);
+  }
 
+  async function fetchQuote(tile) {
+    const url = "https://api.quotable.io/random";
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Quote fetch error");
+    return await response.json();
+  }
+
+  async function fetchCrypto(tile) {
+    const {coinId, currency} = tile.config;
+    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=${currency}`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Crypto fetch error");
+    return await response.json();
+  }
+
+  // Clock tile doesn’t need fetch data, just shows current time
+
+  // ========== Render Tiles ==========
   async function renderTiles() {
     dashboard.innerHTML = '';
     for (let tile of tilesConfig.tiles) {
@@ -215,13 +295,9 @@
       const tileEl = document.createElement("div");
       tileEl.className = "tile";
 
-      // Handle different tile types
-      if (tile.type === "weather") {
-        tileEl.innerHTML = `
-          <h2>Weather</h2>
-          <p>Loading...</p>
-        `;
-        try {
+      try {
+        if (tile.type === "weather") {
+          tileEl.innerHTML = `<h2>Weather</h2><p>Loading...</p>`;
           const data = await fetchWeather(tile);
           tileEl.innerHTML = `
             <h2>Weather</h2>
@@ -229,29 +305,80 @@
             <p>${Math.round(data.main.temp)} °C, ${data.weather[0].description}</p>
             <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
           `;
-        } catch (err) {
-          tileEl.innerHTML += `<p>Error loading weather</p>`;
-        }
-      } else if (tile.type === "stock") {
-        tileEl.innerHTML = `
-          <h2>Stock: ${tile.config.symbol}</h2>
-          <p>Loading...</p>
-        `;
-        try {
+
+        } else if (tile.type === "stock") {
+          tileEl.innerHTML = `<h2>Stock: ${tile.config.symbol}</h2><p>Loading...</p>`;
           const data = await fetchStock(tile);
           tileEl.innerHTML = `
             <h2>Stock: ${tile.config.symbol}</h2>
             <p>Price: $${data.c.toFixed(2)}</p>
             <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
           `;
-        } catch (err) {
-          tileEl.innerHTML += `<p>Error loading stock</p>`;
+
+        } else if (tile.type === "rss") {
+          tileEl.innerHTML = `<h2>News</h2><p>Loading...</p>`;
+          const articles = await fetchRSS(tile);
+          let html = `<h2>News</h2>`;
+          articles.forEach(a => {
+            html += `<p><a href="${a.link}" target="_blank">${a.title}</a></p>`;
+          });
+          html += `<div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>`;
+          tileEl.innerHTML = html;
+
+        } else if (tile.type === "quote") {
+          tileEl.innerHTML = `<h2>Quote</h2><p>Loading...</p>`;
+          const data = await fetchQuote(tile);
+          tileEl.innerHTML = `
+            <h2>Quote</h2>
+            <p>"${data.content}"<br>- ${data.author}</p>
+            <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
+          `;
+
+        } else if (tile.type === "crypto") {
+          tileEl.innerHTML = `<h2>Crypto: ${tile.config.coinId}</h2><p>Loading...</p>`;
+          const data = await fetchCrypto(tile);
+          const price = data[tile.config.coinId][tile.config.currency];
+          tileEl.innerHTML = `
+            <h2>${tile.config.coinId.charAt(0).toUpperCase() + tile.config.coinId.slice(1)} Price</h2>
+            <p>${price} ${tile.config.currency.toUpperCase()}</p>
+            <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
+          `;
+
+        } else if (tile.type === "notes") {
+          tileEl.innerHTML = `
+            <h2>Notes</h2>
+            <p>${tile.config.text.replace(/\n/g, "<br>")}</p>
+          `;
+
+        } else if (tile.type === "clock") {
+          tileEl.innerHTML = `<h2>Clock</h2><p id="clock-${tile.id}">Loading...</p>`;
+          updateClock(tile, tileEl.querySelector(`#clock-${tile.id}`));
+          setInterval(() => updateClock(tile, tileEl.querySelector(`#clock-${tile.id}`)), 1000);
+
+        } else {
+          tileEl.innerHTML = `<h2>Unknown Tile</h2>`;
         }
-      } else {
-        tileEl.innerHTML = `<h2>Unknown Tile</h2>`;
+      } catch (err) {
+        tileEl.innerHTML += `<p>Error loading data</p>`;
+        console.error(err);
       }
 
       dashboard.appendChild(tileEl);
+    }
+  }
+
+  function updateClock(tile, el) {
+    const now = new Date();
+    let hours = now.getHours();
+    let minutes = now.getMinutes().toString().padStart(2, '0');
+    let seconds = now.getSeconds().toString().padStart(2, '0');
+
+    if (tile.config.format === "12h") {
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12 || 12;
+      el.textContent = `${hours}:${minutes}:${seconds} ${ampm}`;
+    } else {
+      el.textContent = `${hours.toString().padStart(2, '0')}:${minutes}:${seconds}`;
     }
   }
 
@@ -274,19 +401,49 @@
       // Add fields depending on tile type
       if (tile.type === "weather") {
         tileDiv.innerHTML += `
-          <label for="city-${tile.id}">City:</label>
-          <input type="text" id="city-${tile.id}" name="city-${tile.id}" value="${tile.config.city}">
-          <label for="country-${tile.id}">Country Code:</label>
-          <input type="text" id="country-${tile.id}" name="country-${tile.id}" value="${tile.config.countryCode}">
-          <label for="weatherKey-${tile.id}">API Key:</label>
-          <input type="text" id="weatherKey-${tile.id}" name="weatherKey-${tile.id}" value="${tile.config.apiKey}">
+          <label>City:</label>
+          <input type="text" name="city-${tile.id}" value="${tile.config.city}">
+          <label>Country Code:</label>
+          <input type="text" name="country-${tile.id}" value="${tile.config.countryCode}">
+          <label>API Key:</label>
+          <input type="text" name="weatherKey-${tile.id}" value="${tile.config.apiKey}">
         `;
       } else if (tile.type === "stock") {
         tileDiv.innerHTML += `
-          <label for="symbol-${tile.id}">Symbol:</label>
-          <input type="text" id="symbol-${tile.id}" name="symbol-${tile.id}" value="${tile.config.symbol}">
-          <label for="stockKey-${tile.id}">API Key:</label>
-          <input type="text" id="stockKey-${tile.id}" name="stockKey-${tile.id}" value="${tile.config.apiKey}">
+          <label>Symbol:</label>
+          <input type="text" name="symbol-${tile.id}" value="${tile.config.symbol}">
+          <label>API Key:</label>
+          <input type="text" name="stockKey-${tile.id}" value="${tile.config.apiKey}">
+        `;
+      } else if (tile.type === "rss") {
+        tileDiv.innerHTML += `
+          <label>RSS URL (JSON):</label>
+          <input type="text" name="rssUrl-${tile.id}" value="${tile.config.url}">
+          <label>Limit:</label>
+          <input type="number" name="rssLimit-${tile.id}" value="${tile.config.limit}">
+        `;
+      } else if (tile.type === "quote") {
+        // No extra config necessary, but we could add refresh interval if desired
+        tileDiv.innerHTML += `<p>No additional config needed.</p>`;
+      } else if (tile.type === "crypto") {
+        tileDiv.innerHTML += `
+          <label>Coin ID (e.g., bitcoin):</label>
+          <input type="text" name="coinId-${tile.id}" value="${tile.config.coinId}">
+          <label>Currency (e.g., usd):</label>
+          <input type="text" name="currency-${tile.id}" value="${tile.config.currency}">
+        `;
+      } else if (tile.type === "notes") {
+        tileDiv.innerHTML += `
+          <label>Notes:</label>
+          <textarea name="notesText-${tile.id}" rows="5">${tile.config.text}</textarea>
+        `;
+      } else if (tile.type === "clock") {
+        tileDiv.innerHTML += `
+          <label>Format:</label>
+          <select name="clockFormat-${tile.id}">
+            <option value="24h" ${tile.config.format === "24h" ? 'selected' : ''}>24-hour</option>
+            <option value="12h" ${tile.config.format === "12h" ? 'selected' : ''}>12-hour</option>
+          </select>
         `;
       }
 
@@ -303,21 +460,29 @@
   function saveConfig() {
     // Read form values and update tilesConfig
     tilesConfig.tiles = tilesConfig.tiles.map(tile => {
-      const visible = document.querySelector(`[name="visible-${tile.id}"]`).checked;
-      if (tile.type === "weather") {
-        const city = document.getElementById(`city-${tile.id}`).value;
-        const country = document.getElementById(`country-${tile.id}`).value;
-        const apiKey = document.getElementById(`weatherKey-${tile.id}`).value;
-        tile.config.city = city;
-        tile.config.countryCode = country;
-        tile.config.apiKey = apiKey;
-      } else if (tile.type === "stock") {
-        const symbol = document.getElementById(`symbol-${tile.id}`).value;
-        const apiKey = document.getElementById(`stockKey-${tile.id}`).value;
-        tile.config.symbol = symbol;
-        tile.config.apiKey = apiKey;
-      }
+      const form = new FormData(configForm.closest('form') || configForm);
+      const visible = form.get(`visible-${tile.id}`) !== null;
       tile.visible = visible;
+
+      if (tile.type === "weather") {
+        tile.config.city = form.get(`city-${tile.id}`);
+        tile.config.countryCode = form.get(`country-${tile.id}`);
+        tile.config.apiKey = form.get(`weatherKey-${tile.id}`);
+      } else if (tile.type === "stock") {
+        tile.config.symbol = form.get(`symbol-${tile.id}`);
+        tile.config.apiKey = form.get(`stockKey-${tile.id}`);
+      } else if (tile.type === "rss") {
+        tile.config.url = form.get(`rssUrl-${tile.id}`);
+        tile.config.limit = parseInt(form.get(`rssLimit-${tile.id}`), 10);
+      } else if (tile.type === "crypto") {
+        tile.config.coinId = form.get(`coinId-${tile.id}`);
+        tile.config.currency = form.get(`currency-${tile.id}`);
+      } else if (tile.type === "notes") {
+        tile.config.text = form.get(`notesText-${tile.id}`);
+      } else if (tile.type === "clock") {
+        tile.config.format = form.get(`clockFormat-${tile.id}`);
+      }
+
       return tile;
     });
 
@@ -334,7 +499,7 @@
   // Initial render
   renderTiles();
 
-  // Optional: Refresh tiles every 5 minutes
+  // Optional: Refresh all tiles every 5 minutes (for tiles like weather, stocks, RSS, quote, crypto)
   setInterval(renderTiles, 5 * 60 * 1000);
 </script>
 
