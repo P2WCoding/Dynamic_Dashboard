@@ -246,9 +246,9 @@
         type: "weather",
         visible: true,
         config: {
-          city: "New York",
+          city: "Morgantown",
           countryCode: "US",
-          apiKey: "YOUR_OPENWEATHER_API_KEY"
+          apiKey: "33dfd53a9d3d81f2922261c29bc94c06" // Replace with a valid API key
         }
       },
       {
@@ -256,8 +256,8 @@
         type: "stock",
         visible: true,
         config: {
-          symbol: "AAPL",
-          apiKey: "YOUR_FINNHUB_API_KEY"
+          symbol: "QUBT",
+          apiKey: "ctcpibpr01qlc0uvah90ctcpibpr01qlc0uvah9g" // Replace with a valid API key from Finnhub
         }
       }
     ]
@@ -269,7 +269,7 @@
   }
 
   let moveMode = false; 
-  let currentlyOpenMenu = null; // Track currently open menu
+  let currentlyOpenMenu = null; 
   let currentConfigTile = null;
 
   const dashboard = document.getElementById("dashboard");
@@ -281,125 +281,210 @@
   const configForm = document.getElementById("config-form");
   const saveConfigBtn = document.getElementById("save-config");
 
-  // API fetching functions, updateClock, and other logic remain as previously implemented...
-  async function fetchWeather(tile) { /* ... */ }
-  async function fetchStock(tile) { /* ... */ }
-  async function fetchRSS(tile) { /* ... */ }
-  async function fetchQuote(tile) { /* ... */ }
-  async function fetchCrypto(tile) { /* ... */ }
-  function updateClock(tile, el) { /* ... */ }
+  // ===== Fetch Functions with Error Handling =====
+  async function fetchWeather(tile) {
+    const { city, countryCode, apiKey } = tile.config;
+    const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)},${encodeURIComponent(countryCode)}&units=metric&appid=${apiKey}`;
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.error("Weather request failed:", response.status, response.statusText);
+        return null;
+      }
+      const data = await response.json();
+      return data;
+    } catch (err) {
+      console.error("Weather fetch error:", err);
+      return null;
+    }
+  }
 
-  // Render Tiles
+  async function fetchStock(tile) {
+    const { symbol, apiKey } = tile.config;
+    const url = `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${apiKey}`;
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.error("Stock request failed:", response.status, response.statusText);
+        return null;
+      }
+      const data = await response.json();
+      return data;
+    } catch (err) {
+      console.error("Stock fetch error:", err);
+      return null;
+    }
+  }
+
+  async function fetchRSS(tile) {
+    const { url, limit } = tile.config;
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.error("RSS request failed:", response.status, response.statusText);
+        return null;
+      }
+      const data = await response.json();
+      // data.items should be an array of articles
+      if (!data || !data.items) return null;
+      return data.items.slice(0, limit);
+    } catch (err) {
+      console.error("RSS fetch error:", err);
+      return null;
+    }
+  }
+
+  async function fetchQuote(tile) {
+    const url = "https://api.quotable.io/random";
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.error("Quote request failed:", response.status, response.statusText);
+        return null;
+      }
+      const data = await response.json();
+      return data;
+    } catch (err) {
+      console.error("Quote fetch error:", err);
+      return null;
+    }
+  }
+
+  async function fetchCrypto(tile) {
+    const { coinId, currency } = tile.config;
+    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(coinId)}&vs_currencies=${encodeURIComponent(currency)}`;
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.error("Crypto request failed:", response.status, response.statusText);
+        return null;
+      }
+      const data = await response.json();
+      return data;
+    } catch (err) {
+      console.error("Crypto fetch error:", err);
+      return null;
+    }
+  }
+
+  function updateClock(tile, el) {
+    const now = new Date();
+    let hours = now.getHours();
+    let minutes = now.getMinutes().toString().padStart(2, '0');
+    let seconds = now.getSeconds().toString().padStart(2, '0');
+
+    if (tile.config.format === "12h") {
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12 || 12;
+      el.textContent = `${hours}:${minutes}:${seconds} ${ampm}`;
+    } else {
+      el.textContent = `${hours.toString().padStart(2, '0')}:${minutes}:${seconds}`;
+    }
+  }
+
+  // ===== Render Tiles =====
   async function renderTiles() {
-	  dashboard.innerHTML = '';
-	  
-	  for (let tile of tilesConfig.tiles) {
-		if (!tile.visible) continue;
+    dashboard.innerHTML = '';
+    
+    for (let tile of tilesConfig.tiles) {
+      if (!tile.visible) continue;
 
-		const tileEl = document.createElement("div");
-		tileEl.className = "tile";
-		tileEl.setAttribute("draggable", moveMode.toString());
-		if (moveMode) tileEl.classList.add("move-mode");
+      const tileEl = document.createElement("div");
+      tileEl.className = "tile";
+      tileEl.setAttribute("draggable", moveMode.toString());
+      if (moveMode) tileEl.classList.add("move-mode");
 
-		// Add base tile menu HTML
-		tileEl.innerHTML = `
-		  <button class="tile-menu-button">⋮</button>
-		  <div class="tile-menu" style="display:none;">
-			<ul>
-			  <li class="configure-tile">Configure</li>
-			  <li class="move-tile">${moveMode ? 'Stop Moving' : 'Move'}</li>
-			  <li class="remove-tile">Remove</li>
-			</ul>
-		  </div>
-		`;
+      tileEl.innerHTML = `
+        <button class="tile-menu-button">⋮</button>
+        <div class="tile-menu" style="display:none;">
+          <ul>
+            <li class="configure-tile">Configure</li>
+            <li class="move-tile">${moveMode ? 'Stop Moving' : 'Move'}</li>
+            <li class="remove-tile">Remove</li>
+          </ul>
+        </div>
+      `;
 
-		// Attempt to fetch and render tile data
-		try {
-		  if (tile.type === "weather") {
-			const data = await fetchWeather(tile);
-			if (!data || !data.weather || !data.sys) {
-			  throw new Error("Incomplete weather data");
-			}
-			tileEl.innerHTML += `
-			  <h2>Weather</h2>
-			  <p><strong>${data.name}, ${data.sys.country}</strong></p>
-			  <p>${Math.round(data.main.temp)} °C, ${data.weather[0].description}</p>
-			  <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
-			`;
-		  } else if (tile.type === "stock") {
-			const data = await fetchStock(tile);
-			if (!data || typeof data.c === 'undefined') {
-			  // Finnhub returns data.c for current price. If it's missing, data is incomplete
-			  throw new Error("Incomplete stock data");
-			}
-			tileEl.innerHTML += `
-			  <h2>Stock: ${tile.config.symbol}</h2>
-			  <p>Price: $${data.c.toFixed(2)}</p>
-			  <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
-			`;
-		  } else if (tile.type === "rss") {
-			const rssData = await fetchRSS(tile);
-			if (!rssData || !Array.isArray(rssData) || rssData.length === 0) {
-			  // If we can't load articles, consider it an error
-			  throw new Error("No RSS articles returned");
-			}
-			let html = `<h2>News</h2>`;
-			rssData.forEach(a => {
-			  html += `<p><a href="${a.link}" target="_blank">${a.title}</a></p>`;
-			});
-			html += `<div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>`;
-			tileEl.innerHTML += html;
-		  } else if (tile.type === "quote") {
-			const data = await fetchQuote(tile);
-			if (!data || !data.content || !data.author) {
-			  throw new Error("Incomplete quote data");
-			}
-			tileEl.innerHTML += `
-			  <h2>Quote</h2>
-			  <p>"${data.content}"<br>- ${data.author}</p>
-			  <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
-			`;
-		  } else if (tile.type === "crypto") {
-			const data = await fetchCrypto(tile);
-			const price = data?.[tile.config.coinId]?.[tile.config.currency];
-			if (typeof price === 'undefined') {
-			  throw new Error("Incomplete crypto data");
-			}
-			tileEl.innerHTML += `
-			  <h2>${tile.config.coinId.charAt(0).toUpperCase() + tile.config.coinId.slice(1)} Price</h2>
-			  <p>${price} ${tile.config.currency.toUpperCase()}</p>
-			  <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
-			`;
-		  } else if (tile.type === "notes") {
-			// Notes tile does not need fetching
-			tileEl.innerHTML += `
-			  <h2>Notes</h2>
-			  <p>${tile.config.text.replace(/\n/g, "<br>")}</p>
-			`;
-		  } else if (tile.type === "clock") {
-			tileEl.innerHTML += `
-			  <h2>Clock</h2>
-			  <p id="clock-${tile.id}"></p>
-			`;
-			const clockEl = tileEl.querySelector(`#clock-${tile.id}`);
-			updateClock(tile, clockEl);
-			setInterval(() => updateClock(tile, clockEl), 1000);
-		  } else {
-			// Unknown tile type
-			throw new Error("Unknown tile type");
-		  }
+      try {
+        if (tile.type === "weather") {
+          const data = await fetchWeather(tile);
+          if (!data || !data.weather || !data.sys) {
+            throw new Error("Incomplete weather data");
+          }
+          tileEl.innerHTML += `
+            <h2>Weather</h2>
+            <p><strong>${data.name}, ${data.sys.country}</strong></p>
+            <p>${Math.round(data.main.temp)} °C, ${data.weather[0].description}</p>
+            <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
+          `;
+        } else if (tile.type === "stock") {
+          const data = await fetchStock(tile);
+          if (!data || typeof data.c === 'undefined') {
+            throw new Error("Incomplete stock data");
+          }
+          tileEl.innerHTML += `
+            <h2>Stock: ${tile.config.symbol}</h2>
+            <p>Price: $${data.c.toFixed(2)}</p>
+            <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
+          `;
+        } else if (tile.type === "rss") {
+          const rssData = await fetchRSS(tile);
+          if (!rssData || !Array.isArray(rssData) || rssData.length === 0) {
+            throw new Error("No RSS articles returned");
+          }
+          let html = `<h2>News</h2>`;
+          rssData.forEach(a => {
+            html += `<p><a href="${a.link}" target="_blank">${a.title}</a></p>`;
+          });
+          html += `<div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>`;
+          tileEl.innerHTML += html;
+        } else if (tile.type === "quote") {
+          const data = await fetchQuote(tile);
+          if (!data || !data.content || !data.author) {
+            throw new Error("Incomplete quote data");
+          }
+          tileEl.innerHTML += `
+            <h2>Quote</h2>
+            <p>"${data.content}"<br>- ${data.author}</p>
+            <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
+          `;
+        } else if (tile.type === "crypto") {
+          const data = await fetchCrypto(tile);
+          const price = data?.[tile.config.coinId]?.[tile.config.currency];
+          if (typeof price === 'undefined') {
+            throw new Error("Incomplete crypto data");
+          }
+          tileEl.innerHTML += `
+            <h2>${tile.config.coinId.charAt(0).toUpperCase() + tile.config.coinId.slice(1)} Price</h2>
+            <p>${price} ${tile.config.currency.toUpperCase()}</p>
+            <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
+          `;
+        } else if (tile.type === "notes") {
+          tileEl.innerHTML += `
+            <h2>Notes</h2>
+            <p>${tile.config.text.replace(/\n/g, "<br>")}</p>
+          `;
+        } else if (tile.type === "clock") {
+          tileEl.innerHTML += `
+            <h2>Clock</h2>
+            <p id="clock-${tile.id}"></p>
+          `;
+          const clockEl = tileEl.querySelector(`#clock-${tile.id}`);
+          updateClock(tile, clockEl);
+          setInterval(() => updateClock(tile, clockEl), 1000);
+        } else {
+          throw new Error("Unknown tile type");
+        }
 
-		} catch (err) {
-		  console.error("Error rendering tile:", tile.type, tile.id, err);
-		  tileEl.innerHTML += `<p>Error loading data</p>`;
-		}
+      } catch (err) {
+        console.error("Error rendering tile:", tile.type, tile.id, err);
+        tileEl.innerHTML += `<p>Error loading data</p>`;
+      }
 
-		// Attach tile menu handlers
-		attachTileMenuHandlers(tileEl, tile);
-
-		dashboard.appendChild(tileEl);
-	  }
-	}
+      attachTileMenuHandlers(tileEl, tile);
+      dashboard.appendChild(tileEl);
+    }
+  }
 
   function attachTileMenuHandlers(tileEl, tile) {
     const menuButton = tileEl.querySelector(".tile-menu-button");
@@ -412,7 +497,6 @@
       currentlyOpenMenu = tileMenu;
     });
 
-    // Configure, Move, Remove actions
     tileMenu.querySelector(".configure-tile").addEventListener("click", () => {
       tileMenu.style.display = "none";
       currentlyOpenMenu = null;
@@ -438,13 +522,11 @@
   }
 
   document.addEventListener("click", (e) => {
-    // If click is outside any open menu, close it
     if (currentlyOpenMenu && !currentlyOpenMenu.contains(e.target) && e.target.className !== "tile-menu-button") {
       closeAnyOpenMenu();
     }
   });
 
-  // Reorder, Toggle Move, Remove, etc.
   function removeTile(id) {
     tilesConfig.tiles = tilesConfig.tiles.filter(t => t.id !== id);
     saveConfig();
@@ -469,7 +551,6 @@
     renderTiles();
   }
 
-  // Add tile functionality
   addTileButton.addEventListener("click", () => {
     addTileOverlay.style.display = "flex";
   });
@@ -515,8 +596,8 @@
     const apiKeyFields = {
       weather: "apiKey",
       stock: "apiKey",
-      rss: null,  // only if needed
-      crypto: null // coingecko doesn't require API key
+      rss: null,
+      crypto: null
     };
 
     const keyField = apiKeyFields[type];
@@ -530,7 +611,6 @@
     }
   }
 
-  // Configure tile modal
   function openConfigModal(tile) {
     currentConfigTile = tile;
     configForm.innerHTML = '';
@@ -591,21 +671,21 @@
   });
 
   saveConfigBtn.addEventListener("click", () => {
-	  if (!currentConfigTile) return;
-	  const formData = new FormData(configForm);
-	  
-	  for (let [key, value] of formData.entries()) {
-		if (currentConfigTile.type === "rss" && key === "limit") {
-		  value = parseInt(value, 10);
-		}
-		currentConfigTile.config[key] = value;
-	  }
+    if (!currentConfigTile) return;
+    const formData = new FormData(configForm);
+    
+    for (let [key, value] of formData.entries()) {
+      if (currentConfigTile.type === "rss" && key === "limit") {
+        value = parseInt(value, 10);
+      }
+      currentConfigTile.config[key] = value;
+    }
 
-	  saveConfig();   // saves to localStorage
-	  configOverlay.style.display = "none";
-	  currentConfigTile = null;
-	  renderTiles();  // re-render after updating tile config
-	});
+    saveConfig();
+    configOverlay.style.display = "none";
+    currentConfigTile = null;
+    renderTiles();
+  });
 
   function saveConfig() {
     localStorage.setItem("dashboardConfig", JSON.stringify(tilesConfig));
@@ -614,7 +694,7 @@
   // Initial render
   renderTiles();
   setInterval(renderTiles, 5 * 60 * 1000);
-</script>
 
+</script>
 </body>
 </html>
