@@ -291,118 +291,115 @@
 
   // Render Tiles
   async function renderTiles() {
-    dashboard.innerHTML = '';
-    for (let tile of tilesConfig.tiles) {
-      if (!tile.visible) continue;
+	  dashboard.innerHTML = '';
+	  
+	  for (let tile of tilesConfig.tiles) {
+		if (!tile.visible) continue;
 
-      const tileEl = document.createElement("div");
-      tileEl.className = "tile";
-      tileEl.setAttribute("draggable", moveMode.toString()); 
-      if (moveMode) tileEl.classList.add("move-mode");
+		const tileEl = document.createElement("div");
+		tileEl.className = "tile";
+		tileEl.setAttribute("draggable", moveMode.toString());
+		if (moveMode) tileEl.classList.add("move-mode");
 
-      // Attach drag events if in moveMode
-      tileEl.addEventListener("dragstart", (e) => {
-        e.dataTransfer.setData("text/plain", tile.id);
-      });
-      tileEl.addEventListener("dragover", (e) => {
-        if (moveMode) {
-          e.preventDefault();
-          tileEl.style.outline = "2px dotted #666";
-        }
-      });
-      tileEl.addEventListener("dragleave", () => {
-        tileEl.style.outline = moveMode ? "2px dashed #333" : "none";
-      });
-      tileEl.addEventListener("drop", (e) => {
-        e.preventDefault();
-        const draggedTileId = e.dataTransfer.getData("text/plain");
-        reorderTiles(draggedTileId, tile.id);
-        tileEl.style.outline = moveMode ? "2px dashed #333" : "none";
-      });
+		// Add base tile menu HTML
+		tileEl.innerHTML = `
+		  <button class="tile-menu-button">⋮</button>
+		  <div class="tile-menu" style="display:none;">
+			<ul>
+			  <li class="configure-tile">Configure</li>
+			  <li class="move-tile">${moveMode ? 'Stop Moving' : 'Move'}</li>
+			  <li class="remove-tile">Remove</li>
+			</ul>
+		  </div>
+		`;
 
-      // Start with the menu HTML
-      tileEl.innerHTML = `
-        <button class="tile-menu-button">⋮</button>
-        <div class="tile-menu" style="display:none;">
-          <ul>
-            <li class="configure-tile">Configure</li>
-            <li class="move-tile">${moveMode ? 'Stop Moving' : 'Move'}</li>
-            <li class="remove-tile">Remove</li>
-          </ul>
-        </div>
-      `;
+		// Attempt to fetch and render tile data
+		try {
+		  if (tile.type === "weather") {
+			const data = await fetchWeather(tile);
+			if (!data || !data.weather || !data.sys) {
+			  throw new Error("Incomplete weather data");
+			}
+			tileEl.innerHTML += `
+			  <h2>Weather</h2>
+			  <p><strong>${data.name}, ${data.sys.country}</strong></p>
+			  <p>${Math.round(data.main.temp)} °C, ${data.weather[0].description}</p>
+			  <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
+			`;
+		  } else if (tile.type === "stock") {
+			const data = await fetchStock(tile);
+			if (!data || typeof data.c === 'undefined') {
+			  // Finnhub returns data.c for current price. If it's missing, data is incomplete
+			  throw new Error("Incomplete stock data");
+			}
+			tileEl.innerHTML += `
+			  <h2>Stock: ${tile.config.symbol}</h2>
+			  <p>Price: $${data.c.toFixed(2)}</p>
+			  <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
+			`;
+		  } else if (tile.type === "rss") {
+			const rssData = await fetchRSS(tile);
+			if (!rssData || !Array.isArray(rssData) || rssData.length === 0) {
+			  // If we can't load articles, consider it an error
+			  throw new Error("No RSS articles returned");
+			}
+			let html = `<h2>News</h2>`;
+			rssData.forEach(a => {
+			  html += `<p><a href="${a.link}" target="_blank">${a.title}</a></p>`;
+			});
+			html += `<div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>`;
+			tileEl.innerHTML += html;
+		  } else if (tile.type === "quote") {
+			const data = await fetchQuote(tile);
+			if (!data || !data.content || !data.author) {
+			  throw new Error("Incomplete quote data");
+			}
+			tileEl.innerHTML += `
+			  <h2>Quote</h2>
+			  <p>"${data.content}"<br>- ${data.author}</p>
+			  <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
+			`;
+		  } else if (tile.type === "crypto") {
+			const data = await fetchCrypto(tile);
+			const price = data?.[tile.config.coinId]?.[tile.config.currency];
+			if (typeof price === 'undefined') {
+			  throw new Error("Incomplete crypto data");
+			}
+			tileEl.innerHTML += `
+			  <h2>${tile.config.coinId.charAt(0).toUpperCase() + tile.config.coinId.slice(1)} Price</h2>
+			  <p>${price} ${tile.config.currency.toUpperCase()}</p>
+			  <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
+			`;
+		  } else if (tile.type === "notes") {
+			// Notes tile does not need fetching
+			tileEl.innerHTML += `
+			  <h2>Notes</h2>
+			  <p>${tile.config.text.replace(/\n/g, "<br>")}</p>
+			`;
+		  } else if (tile.type === "clock") {
+			tileEl.innerHTML += `
+			  <h2>Clock</h2>
+			  <p id="clock-${tile.id}"></p>
+			`;
+			const clockEl = tileEl.querySelector(`#clock-${tile.id}`);
+			updateClock(tile, clockEl);
+			setInterval(() => updateClock(tile, clockEl), 1000);
+		  } else {
+			// Unknown tile type
+			throw new Error("Unknown tile type");
+		  }
 
-      // Load data and append to tile
-      try {
-        let content = '';
-        if (tile.type === "weather") {
-          const data = await fetchWeather(tile);
-          content = `
-            <h2>Weather</h2>
-            <p><strong>${data.name}, ${data.sys.country}</strong></p>
-            <p>${Math.round(data.main.temp)} °C, ${data.weather[0].description}</p>
-            <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
-          `;
-        } else if (tile.type === "stock") {
-          const data = await fetchStock(tile);
-          content = `
-            <h2>Stock: ${tile.config.symbol}</h2>
-            <p>Price: $${data.c.toFixed(2)}</p>
-            <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
-          `;
-        } else if (tile.type === "rss") {
-          const articles = await fetchRSS(tile);
-          content = `<h2>News</h2>`;
-          articles.forEach(a => {
-            content += `<p><a href="${a.link}" target="_blank">${a.title}</a></p>`;
-          });
-          content += `<div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>`;
-        } else if (tile.type === "quote") {
-          const data = await fetchQuote(tile);
-          content = `
-            <h2>Quote</h2>
-            <p>"${data.content}"<br>- ${data.author}</p>
-            <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
-          `;
-        } else if (tile.type === "crypto") {
-          const data = await fetchCrypto(tile);
-          const price = data[tile.config.coinId][tile.config.currency];
-          content = `
-            <h2>${tile.config.coinId.charAt(0).toUpperCase() + tile.config.coinId.slice(1)} Price</h2>
-            <p>${price} ${tile.config.currency.toUpperCase()}</p>
-            <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
-          `;
-        } else if (tile.type === "notes") {
-          content = `
-            <h2>Notes</h2>
-            <p>${tile.config.text.replace(/\n/g, "<br>")}</p>
-          `;
-        } else if (tile.type === "clock") {
-          content = `
-            <h2>Clock</h2>
-            <p id="clock-${tile.id}"></p>
-          `;
-        }
+		} catch (err) {
+		  console.error("Error rendering tile:", tile.type, tile.id, err);
+		  tileEl.innerHTML += `<p>Error loading data</p>`;
+		}
 
-        tileEl.innerHTML += content;
+		// Attach tile menu handlers
+		attachTileMenuHandlers(tileEl, tile);
 
-        if (tile.type === "clock") {
-          const clockEl = tileEl.querySelector(`#clock-${tile.id}`);
-          updateClock(tile, clockEl);
-          setInterval(() => updateClock(tile, clockEl), 1000);
-        }
-
-      } catch (err) {
-        tileEl.innerHTML += `<p>Error loading data</p>`;
-        console.error(err);
-      }
-
-      // Attach menu handlers
-      attachTileMenuHandlers(tileEl, tile);
-
-      dashboard.appendChild(tileEl);
-    }
-  }
+		dashboard.appendChild(tileEl);
+	  }
+	}
 
   function attachTileMenuHandlers(tileEl, tile) {
     const menuButton = tileEl.querySelector(".tile-menu-button");
