@@ -594,21 +594,21 @@
   });
 
   saveConfigBtn.addEventListener("click", () => {
-    if (!currentConfigTile) return;
-    const formData = new FormData(configForm);
+	  if (!currentConfigTile) return;
+	  const formData = new FormData(configForm);
+	  
+	  for (let [key, value] of formData.entries()) {
+		if (currentConfigTile.type === "rss" && key === "limit") {
+		  value = parseInt(value, 10);
+		}
+		currentConfigTile.config[key] = value;
+	  }
 
-    for (let [key, value] of formData.entries()) {
-      if (currentConfigTile.type === "rss" && key === "limit") {
-        value = parseInt(value, 10);
-      }
-      currentConfigTile.config[key] = value;
-    }
-
-    saveConfig();
-    configOverlay.style.display = "none";
-    currentConfigTile = null;
-    renderTiles();
-  });
+	  saveConfig();   // saves to localStorage
+	  configOverlay.style.display = "none";
+	  currentConfigTile = null;
+	  renderTiles();  // re-render after updating tile config
+	});
 
   function saveConfig() {
     localStorage.setItem("dashboardConfig", JSON.stringify(tilesConfig));
