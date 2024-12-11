@@ -193,6 +193,11 @@
     background:#f0f0f0;
   }
 
+  /* Move Mode Highlight */
+  .tile.move-mode {
+    outline: 2px dashed #333;
+  }
+
 </style>
 </head>
 <body>
@@ -208,7 +213,7 @@
   <p>&copy; 2024 My Dashboard</p>
 </footer>
 
-<!-- Modals -->
+<!-- Add Tile Modal -->
 <div class="overlay" id="add-tile-overlay">
   <div class="modal add-tile-list">
     <button class="close-modal" id="close-add-tile">&times;</button>
@@ -225,6 +230,7 @@
   </div>
 </div>
 
+<!-- Configure Tile Modal -->
 <div class="overlay" id="config-overlay">
   <div class="modal tile-config-modal">
     <button class="close-modal" id="close-config-modal">&times;</button>
@@ -236,7 +242,6 @@
 
 <script>
   // ========== INITIAL CONFIG ==========
-  // Default tiles (just weather and stock visible at first)
   let tilesConfig = {
     tiles: [
       {
@@ -266,7 +271,18 @@
     tilesConfig = JSON.parse(savedConfig);
   }
 
+  let moveMode = false; // Global flag for move mode
+
   const dashboard = document.getElementById("dashboard");
+  const addTileOverlay = document.getElementById("add-tile-overlay");
+  const closeAddTileBtn = document.getElementById("close-add-tile");
+  const addTileButton = document.getElementById("add-tile-button");
+  const configOverlay = document.getElementById("config-overlay");
+  const closeConfigModalBtn = document.getElementById("close-config-modal");
+  const configForm = document.getElementById("config-form");
+  const saveConfigBtn = document.getElementById("save-config");
+
+  let currentConfigTile = null;
 
   // ========== DATA FETCH FUNCTIONS ==========
   async function fetchWeather(tile) {
@@ -326,10 +342,41 @@
   // ========== RENDER TILES ==========
   async function renderTiles() {
     dashboard.innerHTML = '';
-    for (let tile of tilesConfig.tiles) {
+    for (let i = 0; i < tilesConfig.tiles.length; i++) {
+      const tile = tilesConfig.tiles[i];
       if (!tile.visible) continue;
+
       const tileEl = document.createElement("div");
       tileEl.className = "tile";
+      tileEl.setAttribute("draggable", moveMode.toString()); 
+
+      tileEl.addEventListener("dragstart", (e) => {
+        e.dataTransfer.setData("text/plain", tile.id);
+      });
+
+      tileEl.addEventListener("dragover", (e) => {
+        if (moveMode) {
+          e.preventDefault();
+          tileEl.style.outline = "2px dotted #666";
+        }
+      });
+
+      tileEl.addEventListener("dragleave", (e) => {
+        tileEl.style.outline = moveMode ? "2px dashed #333" : "none";
+      });
+
+      tileEl.addEventListener("drop", (e) => {
+        e.preventDefault();
+        const draggedTileId = e.dataTransfer.getData("text/plain");
+        reorderTiles(draggedTileId, tile.id);
+        tileEl.style.outline = moveMode ? "2px dashed #333" : "none";
+      });
+
+      if (moveMode) {
+        tileEl.classList.add("move-mode");
+      } else {
+        tileEl.classList.remove("move-mode");
+      }
 
       // Three-dot menu button
       const menuButton = document.createElement("button");
@@ -343,7 +390,7 @@
       tileMenu.innerHTML = `
         <ul>
           <li class="configure-tile">Configure</li>
-          <li class="move-tile">Move</li>
+          <li class="move-tile">${moveMode ? 'Stop Moving' : 'Move'}</li>
           <li class="remove-tile">Remove</li>
         </ul>
       `;
@@ -351,10 +398,8 @@
 
       menuButton.addEventListener("click", (e) => {
         e.stopPropagation();
-        // Toggle the menu
         tileMenu.style.display = (tileMenu.style.display === "block") ? "none" : "block";
       });
-
       document.addEventListener("click", () => {
         tileMenu.style.display = "none";
       });
@@ -366,7 +411,7 @@
       });
       tileMenu.querySelector(".move-tile").addEventListener("click", () => {
         tileMenu.style.display = "none";
-        alert("Move functionality not implemented yet.");
+        toggleMoveMode();
       });
       tileMenu.querySelector(".remove-tile").addEventListener("click", () => {
         tileMenu.style.display = "none";
@@ -375,19 +420,10 @@
 
       // Load tile content
       try {
-        let content = '';
         if (tile.type === "weather") {
           tileEl.innerHTML += `<h2>Weather</h2><p>Loading...</p>`;
           const data = await fetchWeather(tile);
-          tileEl.innerHTML = `
-            <button class="tile-menu-button">⋮</button>
-            <div class="tile-menu" style="display:none;">
-              <ul>
-                <li class="configure-tile">Configure</li>
-                <li class="move-tile">Move</li>
-                <li class="remove-tile">Remove</li>
-              </ul>
-            </div>
+          tileEl.innerHTML = getTileMenuHTML() + `
             <h2>Weather</h2>
             <p><strong>${data.name}, ${data.sys.country}</strong></p>
             <p>${Math.round(data.main.temp)} °C, ${data.weather[0].description}</p>
@@ -396,15 +432,7 @@
         } else if (tile.type === "stock") {
           tileEl.innerHTML += `<h2>Stock: ${tile.config.symbol}</h2><p>Loading...</p>`;
           const data = await fetchStock(tile);
-          tileEl.innerHTML = `
-            <button class="tile-menu-button">⋮</button>
-            <div class="tile-menu" style="display:none;">
-              <ul>
-                <li class="configure-tile">Configure</li>
-                <li class="move-tile">Move</li>
-                <li class="remove-tile">Remove</li>
-              </ul>
-            </div>
+          tileEl.innerHTML = getTileMenuHTML() + `
             <h2>Stock: ${tile.config.symbol}</h2>
             <p>Price: $${data.c.toFixed(2)}</p>
             <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
@@ -412,16 +440,7 @@
         } else if (tile.type === "rss") {
           tileEl.innerHTML += `<h2>News</h2><p>Loading...</p>`;
           const articles = await fetchRSS(tile);
-          let html = `
-            <button class="tile-menu-button">⋮</button>
-            <div class="tile-menu" style="display:none;">
-              <ul>
-                <li class="configure-tile">Configure</li>
-                <li class="move-tile">Move</li>
-                <li class="remove-tile">Remove</li>
-              </ul>
-            </div>
-            <h2>News</h2>`;
+          let html = getTileMenuHTML() + `<h2>News</h2>`;
           articles.forEach(a => {
             html += `<p><a href="${a.link}" target="_blank">${a.title}</a></p>`;
           });
@@ -430,15 +449,7 @@
         } else if (tile.type === "quote") {
           tileEl.innerHTML += `<h2>Quote</h2><p>Loading...</p>`;
           const data = await fetchQuote(tile);
-          tileEl.innerHTML = `
-            <button class="tile-menu-button">⋮</button>
-            <div class="tile-menu" style="display:none;">
-              <ul>
-                <li class="configure-tile">Configure</li>
-                <li class="move-tile">Move</li>
-                <li class="remove-tile">Remove</li>
-              </ul>
-            </div>
+          tileEl.innerHTML = getTileMenuHTML() + `
             <h2>Quote</h2>
             <p>"${data.content}"<br>- ${data.author}</p>
             <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
@@ -447,42 +458,18 @@
           tileEl.innerHTML += `<h2>Crypto: ${tile.config.coinId}</h2><p>Loading...</p>`;
           const data = await fetchCrypto(tile);
           const price = data[tile.config.coinId][tile.config.currency];
-          tileEl.innerHTML = `
-            <button class="tile-menu-button">⋮</button>
-            <div class="tile-menu" style="display:none;">
-              <ul>
-                <li class="configure-tile">Configure</li>
-                <li class="move-tile">Move</li>
-                <li class="remove-tile">Remove</li>
-              </ul>
-            </div>
+          tileEl.innerHTML = getTileMenuHTML() + `
             <h2>${tile.config.coinId.charAt(0).toUpperCase() + tile.config.coinId.slice(1)} Price</h2>
             <p>${price} ${tile.config.currency.toUpperCase()}</p>
             <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
           `;
         } else if (tile.type === "notes") {
-          tileEl.innerHTML = `
-            <button class="tile-menu-button">⋮</button>
-            <div class="tile-menu" style="display:none;">
-              <ul>
-                <li class="configure-tile">Configure</li>
-                <li class="move-tile">Move</li>
-                <li class="remove-tile">Remove</li>
-              </ul>
-            </div>
+          tileEl.innerHTML = getTileMenuHTML() + `
             <h2>Notes</h2>
             <p>${tile.config.text.replace(/\n/g, "<br>")}</p>
           `;
         } else if (tile.type === "clock") {
-          tileEl.innerHTML = `
-            <button class="tile-menu-button">⋮</button>
-            <div class="tile-menu" style="display:none;">
-              <ul>
-                <li class="configure-tile">Configure</li>
-                <li class="move-tile">Move</li>
-                <li class="remove-tile">Remove</li>
-              </ul>
-            </div>
+          tileEl.innerHTML = getTileMenuHTML() + `
             <h2>Clock</h2>
             <p id="clock-${tile.id}"></p>
           `;
@@ -491,35 +478,51 @@
           setInterval(() => updateClock(tile, clockEl), 1000);
         }
 
-        // Re-attach menu handlers (since we replaced innerHTML)
-        const replacedMenuButton = tileEl.querySelector(".tile-menu-button");
-        const replacedTileMenu = tileEl.querySelector(".tile-menu");
-        replacedMenuButton.addEventListener("click", (e) => {
-          e.stopPropagation();
-          replacedTileMenu.style.display = replacedTileMenu.style.display === "block" ? "none" : "block";
-        });
-        document.addEventListener("click", () => {
-          replacedTileMenu.style.display = "none";
-        });
-        replacedTileMenu.querySelector(".configure-tile").addEventListener("click", () => {
-          replacedTileMenu.style.display = "none";
-          openConfigModal(tile);
-        });
-        replacedTileMenu.querySelector(".move-tile").addEventListener("click", () => {
-          replacedTileMenu.style.display = "none";
-          alert("Move functionality not implemented yet.");
-        });
-        replacedTileMenu.querySelector(".remove-tile").addEventListener("click", () => {
-          replacedTileMenu.style.display = "none";
-          removeTile(tile.id);
-        });
-
+        // Re-attach handlers after innerHTML replacement
+        reattachMenuHandlers(tileEl, tile);
       } catch (err) {
         tileEl.innerHTML += `<p>Error loading data</p>`;
         console.error(err);
       }
 
       dashboard.appendChild(tileEl);
+    }
+
+    function getTileMenuHTML() {
+      return `
+        <button class="tile-menu-button">⋮</button>
+        <div class="tile-menu" style="display:none;">
+          <ul>
+            <li class="configure-tile">Configure</li>
+            <li class="move-tile">${moveMode ? 'Stop Moving' : 'Move'}</li>
+            <li class="remove-tile">Remove</li>
+          </ul>
+        </div>
+      `;
+    }
+
+    function reattachMenuHandlers(tileEl, tile) {
+      const replacedMenuButton = tileEl.querySelector(".tile-menu-button");
+      const replacedTileMenu = tileEl.querySelector(".tile-menu");
+      replacedMenuButton.addEventListener("click", (e) => {
+        e.stopPropagation();
+        replacedTileMenu.style.display = replacedTileMenu.style.display === "block" ? "none" : "block";
+      });
+      document.addEventListener("click", () => {
+        replacedTileMenu.style.display = "none";
+      });
+      replacedTileMenu.querySelector(".configure-tile").addEventListener("click", () => {
+        replacedTileMenu.style.display = "none";
+        openConfigModal(tile);
+      });
+      replacedTileMenu.querySelector(".move-tile").addEventListener("click", () => {
+        replacedTileMenu.style.display = "none";
+        toggleMoveMode();
+      });
+      replacedTileMenu.querySelector(".remove-tile").addEventListener("click", () => {
+        replacedTileMenu.style.display = "none";
+        removeTile(tile.id);
+      });
     }
   }
 
@@ -529,11 +532,26 @@
     renderTiles();
   }
 
-  // ========== ADD TILE FUNCTIONALITY ==========
-  const addTileOverlay = document.getElementById("add-tile-overlay");
-  const closeAddTileBtn = document.getElementById("close-add-tile");
-  const addTileButton = document.getElementById("add-tile-button");
+  // ========== REORDER TILES ==========
+  function reorderTiles(draggedTileId, targetTileId) {
+    const draggedIndex = tilesConfig.tiles.findIndex(t => t.id === draggedTileId);
+    const targetIndex = tilesConfig.tiles.findIndex(t => t.id === targetTileId);
 
+    if (draggedIndex < 0 || targetIndex < 0 || draggedIndex === targetIndex) return;
+
+    const draggedTile = tilesConfig.tiles.splice(draggedIndex, 1)[0];
+    tilesConfig.tiles.splice(targetIndex, 0, draggedTile);
+
+    saveConfig();
+    renderTiles();
+  }
+
+  function toggleMoveMode() {
+    moveMode = !moveMode;
+    renderTiles();
+  }
+
+  // ========== ADD TILE FUNCTIONALITY ==========
   addTileButton.addEventListener("click", () => {
     addTileOverlay.style.display = "flex";
   });
@@ -552,6 +570,8 @@
   function addNewTile(type) {
     const id = type + "-" + Date.now();
     const config = getDefaultConfigForTileType(type);
+    inheritApiKeyIfAvailable(type, config);
+
     tilesConfig.tiles.push({
       id: id,
       type: type,
@@ -564,9 +584,9 @@
 
   function getDefaultConfigForTileType(type) {
     if (type === "weather") {
-      return { city: "New York", countryCode: "US", apiKey: "YOUR_OPENWEATHER_API_KEY" };
+      return { city: "New York", countryCode: "US", apiKey: "" };
     } else if (type === "stock") {
-      return { symbol: "AAPL", apiKey: "YOUR_FINNHUB_API_KEY" };
+      return { symbol: "AAPL", apiKey: "" };
     } else if (type === "rss") {
       return { url: "https://api.rss2json.com/v1/api.json?rss_url=https://news.google.com/rss", limit: 5 };
     } else if (type === "quote") {
@@ -581,19 +601,33 @@
     return {};
   }
 
+  // Inherit API key if there's another tile of the same type with an API key set
+  function inheritApiKeyIfAvailable(type, config) {
+    // Types that require API keys could be weather, stock, rss, crypto
+    let apiKeyFields = {
+      weather: "apiKey",
+      stock: "apiKey",
+      rss: null, // If needed, set field name if RSS requires an API key
+      crypto: null // coinGecko doesn't require API key
+    };
+
+    const keyField = apiKeyFields[type];
+    if (!keyField) return; // If no key field is required, skip
+
+    if (!config[keyField]) {
+      // Try to find another tile of the same type with an API key
+      const existingTile = tilesConfig.tiles.find(t => t.type === type && t.config[keyField] && t.config[keyField] !== "");
+      if (existingTile) {
+        config[keyField] = existingTile.config[keyField];
+      }
+    }
+  }
+
   // ========== CONFIGURE TILE MODAL ==========
-  const configOverlay = document.getElementById("config-overlay");
-  const closeConfigModalBtn = document.getElementById("close-config-modal");
-  const configForm = document.getElementById("config-form");
-  const saveConfigBtn = document.getElementById("save-config");
-
-  let currentConfigTile = null;
-
   function openConfigModal(tile) {
     currentConfigTile = tile;
     configForm.innerHTML = '';
 
-    // Generate fields based on tile type
     if (tile.type === "weather") {
       configForm.innerHTML = `
         <label>City:</label>
@@ -653,9 +687,7 @@
     if (!currentConfigTile) return;
     const formData = new FormData(configForm);
 
-    // Update tile config
     for (let [key, value] of formData.entries()) {
-      // Convert limit to number if rss
       if (currentConfigTile.type === "rss" && key === "limit") {
         value = parseInt(value, 10);
       }
@@ -669,7 +701,6 @@
   });
 
   // ========== SAVE CONFIG ==========
-
   function saveConfig() {
     localStorage.setItem("dashboardConfig", JSON.stringify(tilesConfig));
   }
