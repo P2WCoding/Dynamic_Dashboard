@@ -8,8 +8,8 @@
   body {
     font-family: Arial, sans-serif;
     background: var(--bg-color);
-    margin: 0; 
-    padding: 0; 
+    margin: 0;
+    padding: 0;
     display: flex; 
     flex-direction: column;
     height: 100vh;
@@ -72,13 +72,23 @@
     font-size: 14px;
   }
 
+  /* 
+    We make a 4x4 grid and fit it into the current window size as a square.
+    We assume header+footer total height ~100px. We take min of (viewport width, viewport height-100px) for a square.
+  */
   #dashboard {
-    flex: 1;
+    /* Reserve space: subtract ~100px for header/footer */
+    /* Use min to pick the smaller dimension for a square */
+    width: calc(min(100vw, 100vh - 100px));
+    height: calc(min(100vw, 100vh - 100px));
+    margin: 0 auto; /* center horizontally */
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-    padding: 20px;
-    overflow-y: auto;
+    grid-template-rows: repeat(4, 1fr);
+    gap: 10px;
+    padding: 10px;
+    box-sizing: border-box;
+    overflow: hidden; /* no scroll, always fits */
   }
 
   .tile {
@@ -87,31 +97,45 @@
     box-shadow: 0 2px 10px var(--tile-shadow);
     position: relative;
     color: var(--text-color);
-    aspect-ratio: 1 / 1; /* Start as a square */
-    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    overflow: hidden; /* if content too big, it may be clipped */
   }
 
   .tile h2 {
-    margin: 0 0 10px;
-    font-size: 1.2em;
+    margin: 5px 0;
+    font-size: 1em;
     text-align: center;
   }
+
+  .tile img.icon {
+    width: 24px;
+    height: 24px;
+    display: block;
+    margin: 0 auto 5px auto;
+  }
+
   .tile p {
     margin: 5px 0;
+    font-size: 0.9em;
     text-align: center;
   }
+
   .updated {
-    font-size: 0.8em;
+    font-size: 0.7em;
     color: var(--text-color);
-    margin-top: 10px;
+    margin-top: 5px;
     text-align: center;
     opacity: 0.7;
   }
 
   .tile-menu-button {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 5px;
+    right: 5px;
     background: none;
     border: none;
     font-size: 18px;
@@ -121,8 +145,8 @@
 
   .tile-menu {
     position: absolute;
-    top: 35px;
-    right: 10px;
+    top: 25px;
+    right: 5px;
     background: var(--tile-bg);
     border: 1px solid var(--tile-border);
     font-size: 14px;
@@ -141,6 +165,7 @@
     padding: 8px 10px;
     cursor: pointer;
     border-bottom: 1px solid var(--tile-border);
+    font-size: 0.9em;
   }
   .tile-menu li:last-child {
     border-bottom: none;
@@ -180,6 +205,7 @@
 
   .modal h2 {
     margin-top:0;
+    font-size: 1em;
   }
 
   .close-modal {
@@ -210,6 +236,7 @@
     border: 1px solid var(--tile-border);
     border-radius: 4px;
     padding:5px;
+    font-size: 0.9em;
   }
 
   .tile-config-modal button {
@@ -220,6 +247,7 @@
     cursor:pointer;
     margin-top:20px;
     float:right;
+    font-size: 0.9em;
   }
 
   .add-tile-list ul {
@@ -284,8 +312,8 @@
 
 <script>
   // Constants for API keys
-  const WEATHER_API_KEY = "33dfd53a9d3d81f2922261c29bc94c06"; // Replace with real key
-  const FINNHUB_API_KEY = "ctcpibpr01qlc0uvah90ctcpibpr01qlc0uvah9g";     // Replace with real key
+  const WEATHER_API_KEY = "YOUR_OPENWEATHER_API_KEY"; // Replace with real key
+  const FINNHUB_API_KEY = "YOUR_FINNHUB_API_KEY";     // Replace with real key
 
   // Load theme from localStorage
   const savedTheme = localStorage.getItem("dashboardTheme");
@@ -302,7 +330,7 @@
         config: {
           city: "Morgantown",
           countryCode: "US",
-          unit: "metric",
+          unit: "imperial",
           updateInterval: 5 // minutes
         }
       },
@@ -326,8 +354,6 @@
   let moveMode = false; 
   let currentlyOpenMenu = null; 
   let currentConfigTile = null;
-  
-  // Keep track of per-tile timers
   const tileTimers = {};
 
   const dashboard = document.getElementById("dashboard");
@@ -347,7 +373,6 @@
   });
 
   async function fetchWeather(tile) {
-    // Assign API key from constant
     tile.config.apiKey = WEATHER_API_KEY;
     const { city, countryCode, apiKey, unit } = tile.config;
     const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)},${encodeURIComponent(countryCode)}&units=${unit}&appid=${apiKey}`;
@@ -365,7 +390,6 @@
   }
 
   async function fetchStock(tile) {
-    // Assign API key from constant
     tile.config.apiKey = FINNHUB_API_KEY;
     const { symbol, apiKey } = tile.config;
     const url = `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${apiKey}`;
@@ -445,12 +469,8 @@
     }
   }
 
-  // Render all tiles (you can limit to 16 if you never want more than 16 displayed)
-  // For example: tilesConfig.tiles.slice(0,16).forEach(...) if you never want more than 16 visible.
   function renderTiles() {
-    // Limit to a max of 16 tiles if desired:
     const tilesToRender = tilesConfig.tiles.slice(0,16);
-
     dashboard.innerHTML = '';
 
     // Clear all timers
@@ -494,11 +514,10 @@
       let data;
       if (tile.type === "weather") {
         data = await fetchWeather(tile);
-        if (!data || !data.weather || !data.sys) {
-          throw new Error("Incomplete weather data");
-        }
+        if (!data || !data.weather || !data.sys) throw new Error("Incomplete weather data");
         const unitSymbol = (tile.config.unit === "metric") ? "°C" : "°F";
         tileEl.innerHTML += `
+          <img class="icon" src="https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png" alt="Weather Icon">
           <h2>Weather</h2>
           <p><strong>${data.name}, ${data.sys.country}</strong></p>
           <p>${Math.round(data.main.temp)} ${unitSymbol}, ${data.weather[0].description}</p>
@@ -506,31 +525,29 @@
         `;
       } else if (tile.type === "stock") {
         data = await fetchStock(tile);
-        if (!data || typeof data.c === 'undefined') {
-          throw new Error("Incomplete stock data");
-        }
+        if (!data || typeof data.c === 'undefined') throw new Error("Incomplete stock data");
         tileEl.innerHTML += `
+          <img class="icon" src="stock_icon.png" alt="Stock Icon">
           <h2>Stock: ${tile.config.symbol}</h2>
           <p>Price: $${data.c.toFixed(2)}</p>
           <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
         `;
       } else if (tile.type === "rss") {
         const rssData = await fetchRSS(tile);
-        if (!rssData || !Array.isArray(rssData) || rssData.length === 0) {
-          throw new Error("No RSS articles returned");
-        }
-        let html = `<h2>News</h2>`;
+        if (!rssData || !Array.isArray(rssData) || rssData.length === 0) throw new Error("No RSS articles returned");
+        tileEl.innerHTML += `
+          <img class="icon" src="rss_icon.png" alt="RSS Icon">
+          <h2>News</h2>
+        `;
         rssData.forEach(a => {
-          html += `<p><a href="${a.link}" target="_blank">${a.title}</a></p>`;
+          tileEl.innerHTML += `<p><a href="${a.link}" target="_blank">${a.title}</a></p>`;
         });
-        html += `<div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>`;
-        tileEl.innerHTML += html;
+        tileEl.innerHTML += `<div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>`;
       } else if (tile.type === "quote") {
         data = await fetchQuote(tile);
-        if (!data || !data.content || !data.author) {
-          throw new Error("Incomplete quote data");
-        }
+        if (!data || !data.content || !data.author) throw new Error("Incomplete quote data");
         tileEl.innerHTML += `
+          <img class="icon" src="quote_icon.png" alt="Quote Icon">
           <h2>Quote</h2>
           <p>"${data.content}"<br>- ${data.author}</p>
           <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
@@ -538,21 +555,22 @@
       } else if (tile.type === "crypto") {
         data = await fetchCrypto(tile);
         const price = data?.[tile.config.coinId]?.[tile.config.currency];
-        if (typeof price === 'undefined') {
-          throw new Error("Incomplete crypto data");
-        }
+        if (typeof price === 'undefined') throw new Error("Incomplete crypto data");
         tileEl.innerHTML += `
+          <img class="icon" src="crypto_icon.png" alt="Crypto Icon">
           <h2>${tile.config.coinId.charAt(0).toUpperCase() + tile.config.coinId.slice(1)} Price</h2>
           <p>${price} ${tile.config.currency.toUpperCase()}</p>
           <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
         `;
       } else if (tile.type === "notes") {
         tileEl.innerHTML += `
+          <img class="icon" src="notes_icon.png" alt="Notes Icon">
           <h2>Notes</h2>
           <p>${tile.config.text.replace(/\n/g, "<br>")}</p>
         `;
       } else if (tile.type === "clock") {
         tileEl.innerHTML += `
+          <img class="icon" src="clock_icon.png" alt="Clock Icon">
           <h2>Clock</h2>
           <p id="clock-${tile.id}"></p>
         `;
@@ -668,7 +686,6 @@
   function addNewTile(type) {
     const id = type + "-" + Date.now();
     const config = getDefaultConfigForTileType(type);
-    inheritApiKeyIfAvailable(type, config);
 
     tilesConfig.tiles.push({
       id: id,
@@ -691,17 +708,10 @@
     return {};
   }
 
-  // Automatically assign API keys when needed
-  function inheritApiKeyIfAvailable(type, config) {
-    // We no longer rely on user input for API keys, we set them directly in fetch functions.
-    // This function can remain empty or you can remove it entirely.
-  }
-
   function openConfigModal(tile) {
     currentConfigTile = tile;
     configForm.innerHTML = '';
 
-    // Remove API key fields from weather and stock since we now store them in code
     if (tile.type === "weather") {
       configForm.innerHTML = `
         <label>City:</label>
