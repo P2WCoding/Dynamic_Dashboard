@@ -75,7 +75,7 @@
   #dashboard {
     flex: 1;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 20px;
     padding: 20px;
     overflow-y: auto;
@@ -88,9 +88,9 @@
     position: relative;
     color: var(--text-color);
     aspect-ratio: 1 / 1; /* Start as a square */
-    padding: 20px; /* Optional: you can adjust or remove this */
+    padding: 20px;
   }
-  
+
   .tile h2 {
     margin: 0 0 10px;
     font-size: 1.2em;
@@ -283,6 +283,10 @@
 </div>
 
 <script>
+  // Constants for API keys
+  const WEATHER_API_KEY = "YOUR_OPENWEATHER_API_KEY"; // Replace with real key
+  const FINNHUB_API_KEY = "YOUR_FINNHUB_API_KEY";     // Replace with real key
+
   // Load theme from localStorage
   const savedTheme = localStorage.getItem("dashboardTheme");
   if (savedTheme === "dark") {
@@ -298,7 +302,6 @@
         config: {
           city: "Morgantown",
           countryCode: "US",
-          apiKey: "33dfd53a9d3d81f2922261c29bc94c06", // Replace with a valid key
           unit: "metric",
           updateInterval: 5 // minutes
         }
@@ -309,7 +312,6 @@
         visible: true,
         config: {
           symbol: "QUBT",
-          apiKey: "ctcpibpr01qlc0uvah90ctcpibpr01qlc0uvah9g", // Replace with a valid key
           updateInterval: 5 // minutes
         }
       }
@@ -345,6 +347,8 @@
   });
 
   async function fetchWeather(tile) {
+    // Assign API key from constant
+    tile.config.apiKey = WEATHER_API_KEY;
     const { city, countryCode, apiKey, unit } = tile.config;
     const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)},${encodeURIComponent(countryCode)}&units=${unit}&appid=${apiKey}`;
     try {
@@ -361,6 +365,8 @@
   }
 
   async function fetchStock(tile) {
+    // Assign API key from constant
+    tile.config.apiKey = FINNHUB_API_KEY;
     const { symbol, apiKey } = tile.config;
     const url = `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${apiKey}`;
     try {
@@ -439,26 +445,27 @@
     }
   }
 
-  // Render all tiles
+  // Render all tiles (you can limit to 16 if you never want more than 16 displayed)
+  // For example: tilesConfig.tiles.slice(0,16).forEach(...) if you never want more than 16 visible.
   function renderTiles() {
-    // Clear existing tiles
+    // Limit to a max of 16 tiles if desired:
+    const tilesToRender = tilesConfig.tiles.slice(0,16);
+
     dashboard.innerHTML = '';
 
-    // Clear all timers since we will re-setup them when rendering each tile
+    // Clear all timers
     for (let id in tileTimers) {
       clearTimeout(tileTimers[id]);
       delete tileTimers[id];
     }
 
-    for (let tile of tilesConfig.tiles) {
+    for (let tile of tilesToRender) {
       if (!tile.visible) continue;
       renderTile(tile);
     }
   }
 
-  // Render a single tile and set its update interval if applicable
   async function renderTile(tile) {
-    // Find if there's an existing tile element with the same id
     let tileEl = document.querySelector(`[data-tile-id="${tile.id}"]`);
     if (!tileEl) {
       tileEl = document.createElement("div");
@@ -468,7 +475,6 @@
       if (moveMode) tileEl.classList.add("move-mode");
       dashboard.appendChild(tileEl);
     } else {
-      // Clear tile content before re-rendering
       tileEl.innerHTML = '';
       tileEl.classList.toggle("move-mode", moveMode);
     }
@@ -552,7 +558,6 @@
         `;
         const clockEl = tileEl.querySelector(`#clock-${tile.id}`);
         updateClock(tile, clockEl);
-        // Clock updates every second
         if (!tileTimers[tile.id]) {
           tileTimers[tile.id] = setInterval(() => updateClock(tile, clockEl), 1000);
         }
@@ -566,14 +571,10 @@
 
     attachTileMenuHandlers(tileEl, tile);
 
-    // If tile has an updateInterval and is not a clock (which updates every second)
-    // schedule a re-render for that tile
     if (tile.type !== "clock" && tile.config.updateInterval && Number(tile.config.updateInterval) > 0) {
-      // Clear existing timer if any
       if (tileTimers[tile.id]) {
         clearTimeout(tileTimers[tile.id]);
       }
-      // Schedule next update
       tileTimers[tile.id] = setTimeout(() => {
         renderTile(tile);
       }, tile.config.updateInterval * 60 * 1000);
@@ -622,7 +623,6 @@
   });
 
   function removeTile(id) {
-    // Clear timer if any
     if (tileTimers[id]) {
       clearTimeout(tileTimers[id]);
       delete tileTimers[id];
@@ -681,47 +681,33 @@
   }
 
   function getDefaultConfigForTileType(type) {
-    if (type === "weather") return { city: "New York", countryCode: "US", apiKey: "", unit: "metric", updateInterval: 5 };
-    if (type === "stock") return { symbol: "AAPL", apiKey: "", updateInterval: 5 };
+    if (type === "weather") return { city: "New York", countryCode: "US", unit: "metric", updateInterval: 5 };
+    if (type === "stock") return { symbol: "AAPL", updateInterval: 5 };
     if (type === "rss") return { url: "https://api.rss2json.com/v1/api.json?rss_url=https://news.google.com/rss", limit: 5 };
-    if (type === "quote") return {}; // no interval set by default, static
-    if (type === "crypto") return { coinId: "bitcoin", currency: "usd" }; // no interval by default
-    if (type === "notes") return { text: "Enter your notes here..." }; // static
-    if (type === "clock") return { format: "24h" }; // updates every second internally
+    if (type === "quote") return {};
+    if (type === "crypto") return { coinId: "bitcoin", currency: "usd" };
+    if (type === "notes") return { text: "Enter your notes here..." };
+    if (type === "clock") return { format: "24h" };
     return {};
   }
 
+  // Automatically assign API keys when needed
   function inheritApiKeyIfAvailable(type, config) {
-    const apiKeyFields = {
-      weather: "apiKey",
-      stock: "apiKey",
-      rss: null,
-      crypto: null
-    };
-
-    const keyField = apiKeyFields[type];
-    if (!keyField) return;
-
-    if (!config[keyField]) {
-      const existingTile = tilesConfig.tiles.find(t => t.type === type && t.config[keyField] && t.config[keyField] !== "");
-      if (existingTile) {
-        config[keyField] = existingTile.config[keyField];
-      }
-    }
+    // We no longer rely on user input for API keys, we set them directly in fetch functions.
+    // This function can remain empty or you can remove it entirely.
   }
 
   function openConfigModal(tile) {
     currentConfigTile = tile;
     configForm.innerHTML = '';
 
+    // Remove API key fields from weather and stock since we now store them in code
     if (tile.type === "weather") {
       configForm.innerHTML = `
         <label>City:</label>
         <input type="text" name="city" value="${tile.config.city}">
         <label>Country Code:</label>
         <input type="text" name="countryCode" value="${tile.config.countryCode}">
-        <label>API Key:</label>
-        <input type="text" name="apiKey" value="${tile.config.apiKey}">
         <label>Unit:</label>
         <select name="unit">
           <option value="metric" ${tile.config.unit === "metric" ? "selected" : ""}>Celsius</option>
@@ -734,8 +720,6 @@
       configForm.innerHTML = `
         <label>Symbol:</label>
         <input type="text" name="symbol" value="${tile.config.symbol}">
-        <label>API Key:</label>
-        <input type="text" name="apiKey" value="${tile.config.apiKey}">
         <label>Update Interval (minutes):</label>
         <input type="number" name="updateInterval" value="${tile.config.updateInterval || 5}">
       `;
@@ -754,7 +738,6 @@
         <input type="text" name="coinId" value="${tile.config.coinId}">
         <label>Currency:</label>
         <input type="text" name="currency" value="${tile.config.currency}">
-        <!-- If you want an interval for crypto as well, add a field here. -->
       `;
     } else if (tile.type === "notes") {
       configForm.innerHTML = `
