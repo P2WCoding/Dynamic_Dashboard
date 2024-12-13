@@ -601,12 +601,18 @@
 
     attachTileMenuHandlers(tileEl, tile);
 
+    // Re-render after interval only if tile still visible
     if (tile.type !== "clock" && tile.config.updateInterval && Number(tile.config.updateInterval) > 0) {
       if (tileTimers[tile.id]) {
         clearTimeout(tileTimers[tile.id]);
       }
       tileTimers[tile.id] = setTimeout(() => {
-        renderTile(tile);
+        const stillVisible = tilesConfig.tiles.some(t => t.id === tile.id && t.visible);
+        if (stillVisible) {
+          renderTile(tile);
+        } else {
+          console.log(`Tile ${tile.id} no longer visible, skipping interval re-render.`);
+        }
       }, tile.config.updateInterval * 60 * 1000);
     }
   }
@@ -697,7 +703,6 @@
 
   function addNewTile(type) {
     const id = type + "-" + Date.now();
-    // Check if a tile with this id already exists
     if (tilesConfig.tiles.some(t => t.id === id)) {
       console.warn("A tile with this id already exists, skipping:", id);
       return;
@@ -710,6 +715,7 @@
       visible: true,
       config: config
     });
+    console.log("Added new tile:", id, "of type:", type);
     saveConfig();
     renderTiles();
   }
@@ -889,6 +895,7 @@
     });
   });
 
+  // Initial render
   renderTiles();
 </script>
 </body>
