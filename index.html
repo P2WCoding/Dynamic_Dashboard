@@ -601,15 +601,17 @@
 
     attachTileMenuHandlers(tileEl, tile);
 
-    // Re-render after interval only if tile still visible
+    // Instead of calling renderTile again after interval, re-render all tiles for consistency
     if (tile.type !== "clock" && tile.config.updateInterval && Number(tile.config.updateInterval) > 0) {
       if (tileTimers[tile.id]) {
         clearTimeout(tileTimers[tile.id]);
       }
       tileTimers[tile.id] = setTimeout(() => {
         const stillVisible = tilesConfig.tiles.some(t => t.id === tile.id && t.visible);
+        console.log(`Interval re-check for ${tile.id}. Still visible?`, stillVisible);
         if (stillVisible) {
-          renderTile(tile);
+          console.log(`Re-rendering from interval due to ${tile.id}`);
+          renderTiles();
         } else {
           console.log(`Tile ${tile.id} no longer visible, skipping interval re-render.`);
         }
@@ -683,6 +685,7 @@
 
   function toggleMoveMode() {
     moveMode = !moveMode;
+    console.log("Move mode:", moveMode);
     renderTiles();
   }
 
@@ -716,6 +719,7 @@
       config: config
     });
     console.log("Added new tile:", id, "of type:", type);
+    console.log("tilesConfig now:", tilesConfig.tiles.map(t => t.id));
     saveConfig();
     renderTiles();
   }
@@ -895,8 +899,8 @@
     });
   });
 
-  // Initial render
   renderTiles();
 </script>
+
 </body>
 </html>
