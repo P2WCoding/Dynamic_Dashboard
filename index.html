@@ -9,11 +9,12 @@
     font-family: Arial, sans-serif;
     background: var(--bg-color);
     margin: 0;
-    padding: 0;
+    padding: 0; 
     display: flex; 
     flex-direction: column;
     height: 100vh;
     color: var(--text-color);
+    touch-action: none; /* Important for proper touch dragging */
   }
 
   :root {
@@ -41,6 +42,7 @@
     color: var(--header-footer-text);
     padding: 10px 20px;
     position: relative;
+    flex-shrink: 0;
   }
 
   header h1 {
@@ -72,23 +74,15 @@
     font-size: 14px;
   }
 
-  /* 
-    We make a 4x4 grid and fit it into the current window size as a square.
-    We assume header+footer total height ~100px. We take min of (viewport width, viewport height-100px) for a square.
-  */
   #dashboard {
-    /* Reserve space: subtract ~100px for header/footer */
-    /* Use min to pick the smaller dimension for a square */
-    width: calc(min(100vw, 100vh - 100px));
-    height: calc(min(100vw, 100vh - 100px));
-    margin: 0 auto; /* center horizontally */
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(4, 1fr);
-    gap: 10px;
-    padding: 10px;
+    /* We'll set rows and columns dynamically with JS */
+    margin: 0 auto;
     box-sizing: border-box;
-    overflow: hidden; /* no scroll, always fits */
+    flex: 1;
+    display: grid;
+    place-items: center;
+    position: relative;
+    touch-action: none; /* needed for pointer events on iOS */
   }
 
   .tile {
@@ -99,10 +93,12 @@
     color: var(--text-color);
     display: flex;
     flex-direction: column;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     padding: 10px;
-    overflow: hidden; /* if content too big, it may be clipped */
+    overflow: hidden;
+    user-select: none;
+    touch-action: none;
   }
 
   .tile h2 {
@@ -110,20 +106,16 @@
     font-size: 1em;
     text-align: center;
   }
-
   .tile img.icon {
     width: 24px;
     height: 24px;
-    display: block;
     margin: 0 auto 5px auto;
   }
-
   .tile p {
     margin: 5px 0;
     font-size: 0.9em;
     text-align: center;
   }
-
   .updated {
     font-size: 0.7em;
     color: var(--text-color);
@@ -176,6 +168,7 @@
 
   footer p {
     margin: 0;
+    flex-shrink: 0;
   }
 
   .overlay {
@@ -250,23 +243,16 @@
     font-size: 0.9em;
   }
 
-  .add-tile-list ul {
-    list-style:none;
-    padding:0;
-    margin:0;
-  }
-
-  .add-tile-list li {
-    padding:10px;
-    border-bottom:1px solid var(--tile-border);
-    cursor:pointer;
-  }
-  .add-tile-list li:hover {
-    background: var(--bg-color);
-  }
-
   .tile.move-mode {
     outline: 2px dashed #333;
+  }
+
+  /* Drag ghost styling */
+  .drag-ghost {
+    position: absolute;
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0.8;
   }
 </style>
 </head>
@@ -311,11 +297,9 @@
 </div>
 
 <script>
-  // Constants for API keys
-  const WEATHER_API_KEY = "33dfd53a9d3d81f2922261c29bc94c06"; // Replace with real key
-  const FINNHUB_API_KEY = "ctcpibpr01qlc0uvah90ctcpibpr01qlc0uvah9g";     // Replace with real key
+  const WEATHER_API_KEY = "33dfd53a9d3d81f2922261c29bc94c06";
+  const FINNHUB_API_KEY = "ctcpibpr01qlc0uvah90ctcpibpr01qlc0uvah9g";
 
-  // Load theme from localStorage
   const savedTheme = localStorage.getItem("dashboardTheme");
   if (savedTheme === "dark") {
     document.body.classList.add("dark-mode");
@@ -331,7 +315,7 @@
           city: "Morgantown",
           countryCode: "US",
           unit: "imperial",
-          updateInterval: 5 // minutes
+          updateInterval: 30
         }
       },
       {
@@ -340,7 +324,7 @@
         visible: true,
         config: {
           symbol: "QUBT",
-          updateInterval: 5 // minutes
+          updateInterval: 1
         }
       }
     ]
@@ -355,7 +339,6 @@
   let currentlyOpenMenu = null; 
   let currentConfigTile = null;
   const tileTimers = {};
-
   const dashboard = document.getElementById("dashboard");
   const addTileOverlay = document.getElementById("add-tile-overlay");
   const closeAddTileBtn = document.getElementById("close-add-tile");
@@ -366,12 +349,12 @@
   const saveConfigBtn = document.getElementById("save-config");
   const themeToggleBtn = document.getElementById("theme-toggle");
 
-  // Theme Toggle
   themeToggleBtn.addEventListener("click", () => {
     document.body.classList.toggle("dark-mode");
     localStorage.setItem("dashboardTheme", document.body.classList.contains("dark-mode") ? "dark" : "light");
   });
 
+  // Example fetch functions (same logic as before)
   async function fetchWeather(tile) {
     tile.config.apiKey = WEATHER_API_KEY;
     const { city, countryCode, apiKey, unit } = tile.config;
@@ -469,20 +452,45 @@
     }
   }
 
+  function setGridSize() {
+    const visibleTiles = tilesConfig.tiles.filter(t => t.visible);
+    const N = visibleTiles.length;
+    let s;
+    if (N === 0) {
+      s = 1;
+    } else if (N <= 4) {
+      s = 2;
+    } else if (N <= 9) {
+      s = 3;
+    } else {
+      s = 4;
+    }
+
+    const availableWidth = window.innerWidth;
+    const availableHeight = window.innerHeight - 100; // space for header/footer
+    const size = Math.min(availableWidth, availableHeight);
+
+    dashboard.style.width = size + "px";
+    dashboard.style.height = size + "px";
+    dashboard.style.gridTemplateColumns = `repeat(${s}, 1fr)`;
+    dashboard.style.gridTemplateRows = `repeat(${s}, 1fr)`;
+  }
+
+  window.addEventListener('resize', () => {
+    setGridSize();
+  });
+
   function renderTiles() {
-    const tilesToRender = tilesConfig.tiles.slice(0,16);
+    const tilesToRender = tilesConfig.tiles.filter(t => t.visible).slice(0,16);
+    setGridSize();
     dashboard.innerHTML = '';
 
-    // Clear all timers
     for (let id in tileTimers) {
       clearTimeout(tileTimers[id]);
       delete tileTimers[id];
     }
 
-    for (let tile of tilesToRender) {
-      if (!tile.visible) continue;
-      renderTile(tile);
-    }
+    tilesToRender.forEach(tile => renderTile(tile));
   }
 
   async function renderTile(tile) {
@@ -698,13 +706,13 @@
   }
 
   function getDefaultConfigForTileType(type) {
-    if (type === "weather") return { city: "New York", countryCode: "US", unit: "metric", updateInterval: 5 };
-    if (type === "stock") return { symbol: "AAPL", updateInterval: 5 };
+    if (type === "weather") return { city: "Morgantown", countryCode: "US", unit: "imperial", updateInterval: 30 };
+    if (type === "stock") return { symbol: "QUBT", updateInterval: 1 };
     if (type === "rss") return { url: "https://api.rss2json.com/v1/api.json?rss_url=https://news.google.com/rss", limit: 5 };
     if (type === "quote") return {};
     if (type === "crypto") return { coinId: "bitcoin", currency: "usd" };
     if (type === "notes") return { text: "Enter your notes here..." };
-    if (type === "clock") return { format: "24h" };
+    if (type === "clock") return { format: "12h" };
     return {};
   }
 
@@ -799,9 +807,106 @@
     localStorage.setItem("dashboardConfig", JSON.stringify(tilesConfig));
   }
 
+  // Drag-and-drop logic for touchscreen
+  let draggedTile = null;
+  let dragStartX = 0;
+  let dragStartY = 0;
+  let ghostEl = null;
+
+  function onPointerDown(e) {
+    if (!e.target.closest('.tile') || moveMode === false) return;
+    const tileEl = e.target.closest('.tile');
+    draggedTile = tileEl;
+    const rect = tileEl.getBoundingClientRect();
+    dragStartX = e.clientX - rect.left;
+    dragStartY = e.clientY - rect.top;
+    tileEl.setPointerCapture(e.pointerId);
+  }
+
+  function onPointerMove(e) {
+    if (!draggedTile) return;
+    if (!ghostEl) {
+      ghostEl = draggedTile.cloneNode(true);
+      ghostEl.classList.add('drag-ghost');
+      document.body.appendChild(ghostEl);
+    }
+    ghostEl.style.left = (e.clientX - dragStartX) + 'px';
+    ghostEl.style.top = (e.clientY - dragStartY) + 'px';
+  }
+
+  function onPointerUp(e) {
+    if (!draggedTile) return;
+    draggedTile.releasePointerCapture(e.pointerId);
+    if (ghostEl) {
+      const dropTile = document.elementFromPoint(e.clientX, e.clientY)?.closest('.tile');
+      if (dropTile && dropTile !== draggedTile) {
+        const allTiles = Array.from(dashboard.querySelectorAll('.tile'));
+        const fromIndex = allTiles.indexOf(draggedTile);
+        const toIndex = allTiles.indexOf(dropTile);
+
+        const tileId = draggedTile.getAttribute('data-tile-id');
+        const fromTileObjIndex = tilesConfig.tiles.findIndex(t => t.id === tileId);
+        const tileObj = tilesConfig.tiles.splice(fromTileObjIndex, 1)[0];
+
+        const toTileId = dropTile.getAttribute('data-tile-id');
+        const toTileObjIndex = tilesConfig.tiles.findIndex(t => t.id === toTileId);
+        tilesConfig.tiles.splice(toTileObjIndex, 0, tileObj);
+
+        saveConfig();
+        renderTiles();
+      }
+      document.body.removeChild(ghostEl);
+      ghostEl = null;
+    }
+    draggedTile = null;
+  }
+
+  dashboard.addEventListener('pointerdown', onPointerDown);
+  dashboard.addEventListener('pointermove', onPointerMove);
+  dashboard.addEventListener('pointerup', onPointerUp);
+  dashboard.addEventListener('pointercancel', onPointerUp);
+
+  addTileButton.addEventListener("click", () => {
+    addTileOverlay.style.display = "flex";
+  });
+  closeAddTileBtn.addEventListener("click", () => {
+    addTileOverlay.style.display = "none";
+  });
+
+  document.querySelectorAll(".add-tile-list li").forEach(li => {
+    li.addEventListener("click", () => {
+      const type = li.getAttribute("data-tile-type");
+      addNewTile(type);
+      addTileOverlay.style.display = "none";
+    });
+  });
+
+  function addNewTile(type) {
+    const id = type + "-" + Date.now();
+    const config = getDefaultConfigForTileType(type);
+    tilesConfig.tiles.push({
+      id: id,
+      type: type,
+      visible: true,
+      config: config
+    });
+    saveConfig();
+    renderTiles();
+  }
+
+  function getDefaultConfigForTileType(type) {
+    if (type === "weather") return { city: "Morgantown", countryCode: "US", unit: "imperial", updateInterval: 30 };
+    if (type === "stock") return { symbol: "QUBT", updateInterval: 1 };
+    if (type === "rss") return { url: "https://api.rss2json.com/v1/api.json?rss_url=https://news.google.com/rss", limit: 5 };
+    if (type === "quote") return {};
+    if (type === "crypto") return { coinId: "bitcoin", currency: "usd" };
+    if (type === "notes") return { text: "Enter your notes here..." };
+    if (type === "clock") return { format: "12h" };
+    return {};
+  }
+
   // Initial render
   renderTiles();
-  
 </script>
 </body>
 </html>
