@@ -357,7 +357,6 @@
     localStorage.setItem("dashboardTheme", document.body.classList.contains("dark-mode") ? "dark" : "light");
   });
 
-  // Example fetch functions (same logic as before)
   async function fetchWeather(tile) {
     tile.config.apiKey = WEATHER_API_KEY;
     const { city, countryCode, apiKey, unit } = tile.config;
@@ -485,6 +484,7 @@
 
   function renderTiles() {
     const tilesToRender = tilesConfig.tiles.filter(t => t.visible).slice(0,16);
+    console.log("Rendering tiles:", tilesToRender.map(t => t.id));
     setGridSize();
     dashboard.innerHTML = '';
 
@@ -497,6 +497,7 @@
   }
 
   async function renderTile(tile) {
+    console.log("Rendering tile:", tile.id);
     let tileEl = document.querySelector(`[data-tile-id="${tile.id}"]`);
     if (!tileEl) {
       tileEl = document.createElement("div");
@@ -696,8 +697,13 @@
 
   function addNewTile(type) {
     const id = type + "-" + Date.now();
-    const config = getDefaultConfigForTileType(type);
+    // Check if a tile with this id already exists
+    if (tilesConfig.tiles.some(t => t.id === id)) {
+      console.warn("A tile with this id already exists, skipping:", id);
+      return;
+    }
 
+    const config = getDefaultConfigForTileType(type);
     tilesConfig.tiles.push({
       id: id,
       type: type,
@@ -810,7 +816,6 @@
     localStorage.setItem("dashboardConfig", JSON.stringify(tilesConfig));
   }
 
-  // Drag-and-drop logic for touchscreen
   let draggedTile = null;
   let dragStartX = 0;
   let dragStartY = 0;
@@ -884,31 +889,6 @@
     });
   });
 
-  function addNewTile(type) {
-    const id = type + "-" + Date.now();
-    const config = getDefaultConfigForTileType(type);
-    tilesConfig.tiles.push({
-      id: id,
-      type: type,
-      visible: true,
-      config: config
-    });
-    saveConfig();
-    renderTiles();
-  }
-
-  function getDefaultConfigForTileType(type) {
-    if (type === "weather") return { city: "Morgantown", countryCode: "US", unit: "imperial", updateInterval: 30 };
-    if (type === "stock") return { symbol: "QUBT", updateInterval: 1 };
-    if (type === "rss") return { url: "https://api.rss2json.com/v1/api.json?rss_url=https://news.google.com/rss", limit: 5 };
-    if (type === "quote") return {};
-    if (type === "crypto") return { coinId: "bitcoin", currency: "usd" };
-    if (type === "notes") return { text: "Enter your notes here..." };
-    if (type === "clock") return { format: "12h" };
-    return {};
-  }
-
-  // Initial render
   renderTiles();
 </script>
 </body>
