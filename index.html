@@ -75,15 +75,18 @@
   }
 
   #dashboard {
-    margin: 0 auto;
-    box-sizing: border-box;
     flex: 1;
     display: grid;
-    gap: 10px; /* Added gap between tiles */
+    gap: 10px; /* space between tiles */
     justify-items: stretch; 
     align-items: stretch;
+    width: 100%;      /* Let the dashboard fill all available width */
+    height: 100%;     /* Let the dashboard fill all available height */
+    box-sizing: border-box;
     position: relative;
     touch-action: none;
+    margin: 0; 
+    padding: 0;
   }
 
   .tile {
@@ -109,16 +112,19 @@
     font-size: 1em;
     text-align: center;
   }
+  
   .tile img.icon {
     width: 24px;
     height: 24px;
     margin: 0 auto 5px;
   }
+  
   .tile p {
     margin: 5px 0;
     font-size: 0.9em;
     text-align: center;
   }
+  
   .updated {
     font-size: 0.7em;
     color: var(--text-color);
@@ -162,9 +168,11 @@
     border-bottom: 1px solid var(--tile-border);
     font-size: 0.9em;
   }
+  
   .tile-menu li:last-child {
     border-bottom: none;
   }
+  
   .tile-menu li:hover {
     background: var(--bg-color);
   }
@@ -299,6 +307,9 @@
 </div>
 
 <script>
+  // Remove forced sizing from setGridSize and only set rows/columns.
+  // Let the grid fill available space naturally.
+
   const WEATHER_API_KEY = "33dfd53a9d3d81f2922261c29bc94c06";
   const FINNHUB_API_KEY = "ctcpibpr01qlc0uvah90ctcpibpr01qlc0uvah9g";
 
@@ -370,8 +381,7 @@
       s = 4;
     }
 
-    // Instead of forcing width and height, let it fill the available space
-    // from flex:1 in the parent. The grid will naturally size each cell.
+    // Just set the rows/columns. The grid will fill available space from flex.
     dashboard.style.gridTemplateColumns = `repeat(${s}, 1fr)`;
     dashboard.style.gridTemplateRows = `repeat(${s}, 1fr)`;
   }
