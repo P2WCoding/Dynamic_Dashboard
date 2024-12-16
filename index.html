@@ -4,6 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>My Custom Dashboard</title>
+  
+  <!-- Font Awesome CDN -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    integrity="sha512-papA7FHXFe3mkJw6yoUJylxIvdkm50FvPpDvAJ2zKxfXTENf29AKKX8lu1gXnS27gAK6gXhrcE6Y0H5R6YvZBA=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+  
+  <!-- Existing CSS Styles -->
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -132,16 +143,21 @@
       transform: translateY(-2px);
     }
 
+    .icon {
+      font-size: 2em; /* Adjust the size as needed */
+      margin: 0 auto 10px auto;
+      color: var(--text-color);
+      transition: color 0.3s;
+    }
+
+    .icon:hover {
+      color: #007BFF; /* Example hover color */
+    }
+
     .tile h2 {
       margin: 5px 0;
       font-size: 1em;
       text-align: center;
-    }
-    
-    .tile img.icon {
-      width: 24px;
-      height: 24px;
-      margin: 0 auto 5px;
     }
     
     .tile p {
@@ -673,7 +689,7 @@
           if (!data || !data.weather || !data.sys) throw new Error("Incomplete weather data");
           const unitSymbol = (tile.config.unit === "metric") ? "°C" : "°F";
           tileEl.innerHTML += `
-            <img class="icon" src="https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png" alt="Weather Icon">
+            <i class="fas fa-cloud-sun icon"></i>
             <h2>Weather</h2>
             <p><strong>${data.name}, ${data.sys.country}</strong></p>
             <p>${Math.round(data.main.temp)} ${unitSymbol}, ${data.weather[0].description}</p>
@@ -683,7 +699,7 @@
           data = await fetchStock(tile);
           if (!data || typeof data.c === 'undefined') throw new Error("Incomplete stock data");
           tileEl.innerHTML += `
-            <img class="icon" src="stock_icon.png" alt="Stock Icon">
+            <i class="fas fa-chart-line icon"></i>
             <h2>Stock: ${tile.config.symbol}</h2>
             <p>Price: $${data.c.toFixed(2)}</p>
             <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
@@ -692,7 +708,7 @@
           const rssData = await fetchRSS(tile);
           if (!rssData || !Array.isArray(rssData) || rssData.length === 0) throw new Error("No RSS articles returned");
           tileEl.innerHTML += `
-            <img class="icon" src="rss_icon.png" alt="RSS Icon">
+            <i class="fas fa-rss icon"></i>
             <h2>News</h2>
           `;
           rssData.forEach(a => {
@@ -703,7 +719,7 @@
           data = await fetchQuote(tile);
           if (!data || !data.content || !data.author) throw new Error("Incomplete quote data");
           tileEl.innerHTML += `
-            <img class="icon" src="quote_icon.png" alt="Quote Icon">
+            <i class="fas fa-quote-right icon"></i>
             <h2>Quote</h2>
             <p>"${data.content}"<br>- ${data.author}</p>
             <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
@@ -713,20 +729,20 @@
           const price = data?.[tile.config.coinId]?.[tile.config.currency];
           if (typeof price === 'undefined') throw new Error("Incomplete crypto data");
           tileEl.innerHTML += `
-            <img class="icon" src="crypto_icon.png" alt="Crypto Icon">
+            <i class="fas fa-bitcoin icon"></i>
             <h2>${tile.config.coinId.charAt(0).toUpperCase() + tile.config.coinId.slice(1)} Price</h2>
             <p>${price} ${tile.config.currency.toUpperCase()}</p>
             <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
           `;
         } else if (tile.type === "notes") {
           tileEl.innerHTML += `
-            <img class="icon" src="notes_icon.png" alt="Notes Icon">
+            <i class="fas fa-sticky-note icon"></i>
             <h2>Notes</h2>
             <p>${tile.config.text.replace(/\n/g, "<br>")}</p>
           `;
         } else if (tile.type === "clock") {
           tileEl.innerHTML += `
-            <img class="icon" src="clock_icon.png" alt="Clock Icon">
+            <i class="fas fa-clock icon"></i>
             <h2>Clock</h2>
             <p id="clock-${tile.id}"></p>
           `;
