@@ -10,6 +10,9 @@
   --menu-bg: #fff;
   --menu-border: #ccc;
   --menu-hover-bg: #f9f9f9;
+  --context-menu-bg: #fff;
+  --context-menu-border: #ccc;
+  --context-menu-hover-bg: #f1f1f1;
 }
 
 body.dark-mode {
@@ -23,6 +26,9 @@ body.dark-mode {
   --menu-bg: #2c2c2c;
   --menu-border: #444;
   --menu-hover-bg: #3c3c3c;
+  --context-menu-bg: #2c2c2c;
+  --context-menu-border: #444;
+  --context-menu-hover-bg: #3c3c3c;
 }
 
 /* Basic Styles */
@@ -160,68 +166,33 @@ header h1 {
   opacity: 0.7;
 }
 
-/* Tile Menu Button */
-.tile-menu-button {
+/* Custom Context Menu */
+.context-menu {
   position: absolute;
-  top: 5px;
-  right: 5px;
-  background: none;
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
-  color: var(--text-color);
-  transition: color 0.3s;
-  z-index: 10; /* Ensure it stays above other elements */
-}
-
-.tile-menu-button:hover {
-  color: #007BFF;
-}
-
-/* Tile Menu */
-.tile-menu {
-  position: absolute;
-  top: 30px;
-  right: 5px;
-  background: var(--menu-bg);
-  border: 1px solid var(--menu-border);
-  font-size: 14px;
+  background: var(--context-menu-bg);
+  border: 1px solid var(--context-menu-border);
   border-radius: 4px;
-  display: none;
-  z-index: 100;
-  min-width: 150px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-  transition: opacity 0.3s, transform 0.3s;
-  opacity: 0;
-  transform: scale(0.95);
+  display: none;
+  z-index: 10000;
+  min-width: 150px;
+  transition: opacity 0.3s;
 }
 
-.tile-menu.show {
-  display: block;
-  opacity: 1;
-  transform: scale(1);
-}
-
-.tile-menu ul {
+.context-menu ul {
   list-style: none;
   margin: 0;
   padding: 5px 0;
 }
 
-.tile-menu li {
+.context-menu li {
   padding: 8px 15px;
   cursor: pointer;
-  border-bottom: 1px solid var(--tile-border);
-  font-size: 0.9em;
   transition: background 0.3s;
 }
 
-.tile-menu li:last-child {
-  border-bottom: none;
-}
-
-.tile-menu li:hover {
-  background: var(--menu-hover-bg);
+.context-menu li:hover {
+  background: var(--context-menu-hover-bg);
 }
 
 /* Footer */
@@ -340,7 +311,7 @@ footer p {
     font-size: 16px;
   }
 
-  .tile-menu li {
+  .context-menu li {
     padding: 8px 12px;
   }
 }

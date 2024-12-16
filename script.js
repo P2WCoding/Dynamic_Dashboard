@@ -59,6 +59,7 @@ const closeConfigModalBtn = document.getElementById("close-config-modal");
 const configForm = document.getElementById("config-form");
 const saveConfigBtn = document.getElementById("save-config");
 const themeToggleBtn = document.getElementById("theme-toggle");
+const contextMenu = document.getElementById("context-menu");
 
 // ======== Event Listeners ========
 
@@ -280,20 +281,7 @@ async function renderTile(tile) {
     tileEl.classList.toggle("move-mode", moveMode);
   }
 
-  // Tile Menu Button and Menu
-  tileEl.innerHTML = `
-    <button class="tile-menu-button" aria-haspopup="true" aria-expanded="false">
-      <i class="fas fa-ellipsis-v"></i>
-    </button>
-    <div class="tile-menu" role="menu">
-      <ul>
-        <li class="configure-tile" role="menuitem">Configure</li>
-        <li class="move-tile" role="menuitem">${moveMode ? 'Stop Moving' : 'Move'}</li>
-        <li class="remove-tile" role="menuitem">Remove</li>
-      </ul>
-    </div>
-  `;
-
+  // Tile Content
   try {
     let data;
     if (tile.type === "weather") {
@@ -371,8 +359,8 @@ async function renderTile(tile) {
     tileEl.innerHTML += `<p>Error loading data</p>`;
   }
 
-  // Attach Menu Handlers
-  attachTileMenuHandlers(tileEl, tile);
+  // Attach Context Menu Handlers
+  attachContextMenuHandlers(tileEl, tile);
 
   // Interval Re-rendering
   if (tile.type !== "clock" && tile.config.updateInterval && Number(tile.config.updateInterval) > 0) {
@@ -392,59 +380,93 @@ async function renderTile(tile) {
   }
 }
 
-function attachTileMenuHandlers(tileEl, tile) {
-  const menuButton = tileEl.querySelector(".tile-menu-button");
-  const tileMenu = tileEl.querySelector(".tile-menu");
-
-  // Toggle Menu Visibility
-  menuButton.addEventListener("click", (e) => {
-    e.stopPropagation();
-    closeAnyOpenMenu();
-    tileMenu.classList.toggle("show");
-    menuButton.setAttribute("aria-expanded", tileMenu.classList.contains("show"));
-    currentlyOpenMenu = tileMenu.classList.contains("show") ? tileMenu : null;
+function attachContextMenuHandlers(tileEl, tile) {
+  // Prevent default context menu on tiles
+  tileEl.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    openContextMenu(e, tile);
   });
 
-  // Configure Tile
-  tileMenu.querySelector(".configure-tile").addEventListener("click", () => {
-    tileMenu.classList.remove("show");
-    menuButton.setAttribute("aria-expanded", "false");
-    currentlyOpenMenu = null;
-    openConfigModal(tile);
+  // Handle tap-and-hold for mobile devices
+  let touchTimer;
+  tileEl.addEventListener("touchstart", (e) => {
+    touchTimer = setTimeout(() => {
+      const touch = e.touches[0];
+      openContextMenu(touch, tile);
+    }, 600); // Duration to detect tap-and-hold (in ms)
   });
 
-  // Move Tile
-  tileMenu.querySelector(".move-tile").addEventListener("click", () => {
-    tileMenu.classList.remove("show");
-    menuButton.setAttribute("aria-expanded", "false");
-    currentlyOpenMenu = null;
-    toggleMoveMode();
+  tileEl.addEventListener("touchend", () => {
+    clearTimeout(touchTimer);
   });
 
-  // Remove Tile
-  tileMenu.querySelector(".remove-tile").addEventListener("click", () => {
-    tileMenu.classList.remove("show");
-    menuButton.setAttribute("aria-expanded", "false");
-    currentlyOpenMenu = null;
-    removeTile(tile.id);
+  tileEl.addEventListener("touchmove", () => {
+    clearTimeout(touchTimer);
   });
 }
 
-function closeAnyOpenMenu() {
+function openContextMenu(e, tile) {
+  // Close any existing open menu
+  closeAnyOpenMenu();
+
+  // Set the current tile
+  currentConfigTile = tile;
+
+  // Position the context menu
+  contextMenu.style.top = `${e.clientY}px`;
+  contextMenu.style.left = `${e.clientX}px`;
+  contextMenu.style.display = "block";
+
+  // Adjust position if the menu goes beyond the viewport
+  const menuRect = contextMenu.getBoundingClientRect();
+  if (menuRect.bottom > window.innerHeight) {
+    contextMenu.style.top = `${window.innerHeight - menuRect.height - 10}px`;
+  }
+  if (menuRect.right > window.innerWidth) {
+    contextMenu.style.left = `${window.innerWidth - menuRect.width - 10}px`;
+  }
+
+  currentlyOpenMenu = contextMenu;
+
+  // Add event listeners for menu options
+  const configureOption = contextMenu.querySelector(".configure-tile");
+  const moveOption = contextMenu.querySelector(".move-tile");
+  const removeOption = contextMenu.querySelector(".remove-tile");
+
+  configureOption.onclick = () => {
+    closeContextMenu();
+    openConfigModal(tile);
+  };
+
+  moveOption.onclick = () => {
+    closeContextMenu();
+    toggleMoveMode();
+  };
+
+  removeOption.onclick = () => {
+    closeContextMenu();
+    removeTile(tile.id);
+  };
+}
+
+function closeContextMenu() {
   if (currentlyOpenMenu) {
-    currentlyOpenMenu.classList.remove("show");
-    const menuButton = currentlyOpenMenu.parentElement.querySelector(".tile-menu-button");
-    if (menuButton) {
-      menuButton.setAttribute("aria-expanded", "false");
-    }
+    currentlyOpenMenu.style.display = "none";
     currentlyOpenMenu = null;
   }
 }
 
-// Close menu when clicking outside
+function closeAnyOpenMenu() {
+  if (currentlyOpenMenu) {
+    currentlyOpenMenu.style.display = "none";
+    currentlyOpenMenu = null;
+  }
+}
+
+// Close context menu when clicking outside
 document.addEventListener("click", (e) => {
-  if (currentlyOpenMenu && !currentlyOpenMenu.contains(e.target) && e.target.closest(".tile-menu-button") === null) {
-    closeAnyOpenMenu();
+  if (currentlyOpenMenu && !currentlyOpenMenu.contains(e.target)) {
+    closeContextMenu();
   }
 });
 
