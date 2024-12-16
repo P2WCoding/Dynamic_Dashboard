@@ -100,6 +100,17 @@
     width: 100%;
     height: 100%;
   }
+
+  .tile-menu-button {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: var(--text-color);
+  }
 </style>
 </head>
 <body>
@@ -159,8 +170,6 @@
   let currentConfigTile = null;
   const tileTimers = {};
   const dashboard = document.getElementById("dashboard");
-  const addTileOverlay = document.getElementById("add-tile-overlay");
-  const addTileButton = document.getElementById("add-tile-button");
 
   function setGridSize() {
     const visibleTiles = tilesConfig.tiles.filter(t => t.visible);
@@ -186,7 +195,10 @@
     tilesToRender.forEach(tile => {
       const tileEl = document.createElement("div");
       tileEl.className = "tile";
-      tileEl.innerHTML = `<h2>${tile.type}</h2>`;
+      tileEl.innerHTML = `
+        <button class="tile-menu-button">⋮</button>
+        <h2>${tile.type}</h2>
+      `;
       dashboard.appendChild(tileEl);
     });
     setGridSize();
