@@ -1,814 +1,1007 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>My Custom Dashboard</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    background: var(--bg-color);
-    margin: 0;
-    padding: 0; 
-    display: flex; 
-    flex-direction: column;
-    height: 100vh;
-    color: var(--text-color);
-    touch-action: none;
-  }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Custom Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--bg-color);
+      margin: 0;
+      padding: 0; 
+      display: flex; 
+      flex-direction: column;
+      height: 100vh;
+      color: var(--text-color);
+      touch-action: none;
+    }
 
-  :root {
-    --bg-color: #f2f2f2;
-    --tile-bg: #fff;
-    --text-color: #000;
-    --header-footer-bg: #333;
-    --header-footer-text: #fff;
-    --tile-border: #ccc;
-    --tile-shadow: rgba(0,0,0,0.1);
-  }
+    :root {
+      --bg-color: #f2f2f2;
+      --tile-bg: #fff;
+      --text-color: #000;
+      --header-footer-bg: #333;
+      --header-footer-text: #fff;
+      --tile-border: #ccc;
+      --tile-shadow: rgba(0,0,0,0.1);
+      --menu-bg: #fff;
+      --menu-border: #ccc;
+      --menu-hover-bg: #f9f9f9;
+    }
 
-  body.dark-mode {
-    --bg-color: #1c1c1c;
-    --tile-bg: #2c2c2c;
-    --text-color: #eee;
-    --header-footer-bg: #111;
-    --header-footer-text: #eee;
-    --tile-border: #444;
-    --tile-shadow: rgba(255,255,255,0.1);
-  }
+    body.dark-mode {
+      --bg-color: #1c1c1c;
+      --tile-bg: #2c2c2c;
+      --text-color: #eee;
+      --header-footer-bg: #111;
+      --header-footer-text: #eee;
+      --tile-border: #444;
+      --tile-shadow: rgba(255,255,255,0.1);
+      --menu-bg: #2c2c2c;
+      --menu-border: #444;
+      --menu-hover-bg: #3c3c3c;
+    }
 
-  header, footer {
-    background: var(--header-footer-bg);
-    color: var(--header-footer-text);
-    padding: 10px 20px;
-    position: relative;
-    flex-shrink: 0;
-  }
+    header, footer {
+      background: var(--header-footer-bg);
+      color: var(--header-footer-text);
+      padding: 10px 20px;
+      position: relative;
+      flex-shrink: 0;
+    }
 
-  header h1 {
-    margin: 0;
-    display: inline-block;
-  }
+    header h1 {
+      margin: 0;
+      display: inline-block;
+    }
 
-  #add-tile-button {
-    position: absolute;
-    right: 20px;
-    top: 10px;
-    background: #444;
-    border: none;
-    color: #fff;
-    padding: 5px 10px;
-    cursor: pointer;
-    font-size: 18px;
-  }
+    #add-tile-button {
+      position: absolute;
+      right: 20px;
+      top: 10px;
+      background: #444;
+      border: none;
+      color: #fff;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-size: 18px;
+      border-radius: 4px;
+      transition: background 0.3s;
+    }
 
-  #theme-toggle {
-    position: absolute;
-    right: 60px;
-    top: 10px;
-    background: #444;
-    border: none;
-    color: #fff;
-    padding: 5px 10px;
-    cursor: pointer;
-    font-size: 14px;
-  }
+    #add-tile-button:hover {
+      background: #555;
+    }
 
-  #dashboard {
-    flex: 1;
-    display: grid;
-    gap: 10px; /* space between tiles */
-    justify-items: stretch; 
-    align-items: stretch;
-    width: 100%;      /* Let the dashboard fill all available width */
-    height: 100%;     /* Let the dashboard fill all available height */
-    box-sizing: border-box;
-    position: relative;
-    touch-action: none;
-    margin: 0; 
-    padding: 0;
-  }
+    #theme-toggle {
+      position: absolute;
+      right: 60px;
+      top: 10px;
+      background: #444;
+      border: none;
+      color: #fff;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-size: 14px;
+      border-radius: 4px;
+      transition: background 0.3s;
+    }
 
-  .tile {
-    background: var(--tile-bg);
-    border-radius: 8px;
-    box-shadow: 0 2px 10px var(--tile-shadow);
-    position: relative;
-    color: var(--text-color);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 10px;
-    overflow: hidden;
-    user-select: none;
-    touch-action: none;
-    width: 100%;
-    height: 100%;
-  }
+    #theme-toggle:hover {
+      background: #555;
+    }
 
-  .tile h2 {
-    margin: 5px 0;
-    font-size: 1em;
-    text-align: center;
-  }
-  
-  .tile img.icon {
-    width: 24px;
-    height: 24px;
-    margin: 0 auto 5px;
-  }
-  
-  .tile p {
-    margin: 5px 0;
-    font-size: 0.9em;
-    text-align: center;
-  }
-  
-  .updated {
-    font-size: 0.7em;
-    color: var(--text-color);
-    margin-top: 5px;
-    text-align: center;
-    opacity: 0.7;
-  }
+    #dashboard {
+      flex: 1;
+      display: grid;
+      gap: 10px; /* space between tiles */
+      justify-items: stretch; 
+      align-items: stretch;
+      width: 100%;      /* Let the dashboard fill all available width */
+      height: 100%;     /* Let the dashboard fill all available height */
+      box-sizing: border-box;
+      position: relative;
+      touch-action: none;
+      margin: 0; 
+      padding: 10px;
+      overflow: auto; /* Allow scrolling if content overflows */
+    }
 
-  .tile-menu-button {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    background: none;
-    border: none;
-    font-size: 18px;
-    cursor: pointer;
-    color: var(--text-color);
-  }
+    .tile {
+      background: var(--tile-bg);
+      border-radius: 8px;
+      box-shadow: 0 2px 10px var(--tile-shadow);
+      position: relative;
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+      overflow: hidden;
+      user-select: none;
+      touch-action: none;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      transition: transform 0.2s;
+    }
 
-  .tile-menu {
-    position: absolute;
-    top: 25px;
-    right: 5px;
-    background: var(--tile-bg);
-    border: 1px solid var(--tile-border);
-    font-size: 14px;
-    border-radius: 4px;
-    display: none;
-    z-index: 100;
-  }
+    .tile:hover {
+      transform: translateY(-2px);
+    }
 
-  .tile-menu ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
+    .tile h2 {
+      margin: 5px 0;
+      font-size: 1em;
+      text-align: center;
+    }
+    
+    .tile img.icon {
+      width: 24px;
+      height: 24px;
+      margin: 0 auto 5px;
+    }
+    
+    .tile p {
+      margin: 5px 0;
+      font-size: 0.9em;
+      text-align: center;
+    }
+    
+    .updated {
+      font-size: 0.7em;
+      color: var(--text-color);
+      margin-top: 5px;
+      text-align: center;
+      opacity: 0.7;
+    }
 
-  .tile-menu li {
-    padding: 8px 10px;
-    cursor: pointer;
-    border-bottom: 1px solid var(--tile-border);
-    font-size: 0.9em;
-  }
-  
-  .tile-menu li:last-child {
-    border-bottom: none;
-  }
-  
-  .tile-menu li:hover {
-    background: var(--bg-color);
-  }
+    .tile-menu-button {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: var(--text-color);
+      transition: color 0.3s;
+    }
 
-  footer p {
-    margin: 0;
-    flex-shrink: 0;
-  }
+    .tile-menu-button:hover {
+      color: #007BFF;
+    }
 
-  .overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right:0;
-    bottom:0;
-    background: rgba(0,0,0,0.5);
-    display: none;
-    align-items:center;
-    justify-content:center;
-    z-index: 9999;
-  }
+    .tile-menu {
+      position: absolute;
+      top: 30px;
+      right: 5px;
+      background: var(--menu-bg);
+      border: 1px solid var(--menu-border);
+      font-size: 14px;
+      border-radius: 4px;
+      display: none;
+      z-index: 100;
+      min-width: 150px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      transition: opacity 0.3s, transform 0.3s;
+      opacity: 0;
+      transform: scale(0.95);
+    }
 
-  .modal {
-    background: var(--tile-bg);
-    border-radius: 8px;
-    width: 90%;
-    max-width: 500px;
-    padding: 20px;
-    position: relative;
-    max-height: 90vh;
-    overflow-y: auto;
-    color: var(--text-color);
-  }
+    .tile-menu.show {
+      display: block;
+      opacity: 1;
+      transform: scale(1);
+    }
 
-  .modal h2 {
-    margin-top:0;
-    font-size: 1em;
-  }
+    .tile-menu ul {
+      list-style: none;
+      margin: 0;
+      padding: 5px 0;
+    }
 
-  .close-modal {
-    position:absolute;
-    top:10px;
-    right:10px;
-    background:none;
-    border:none;
-    font-size:1.2em;
-    cursor:pointer;
-    color: var(--text-color);
-  }
+    .tile-menu li {
+      padding: 8px 15px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--tile-border);
+      font-size: 0.9em;
+      transition: background 0.3s;
+    }
+    
+    .tile-menu li:last-child {
+      border-bottom: none;
+    }
+    
+    .tile-menu li:hover {
+      background: var(--menu-hover-bg);
+    }
 
-  .tile-config-modal label {
-    display:block;
-    margin-top:10px;
-  }
+    footer p {
+      margin: 0;
+      flex-shrink: 0;
+    }
 
-  .tile-config-modal input[type="text"],
-  .tile-config-modal input[type="number"],
-  .tile-config-modal textarea,
-  .tile-config-modal select {
-    width:100%;
-    margin-bottom:5px;
-    box-sizing:border-box;
-    background: var(--bg-color);
-    color: var(--text-color);
-    border: 1px solid var(--tile-border);
-    border-radius: 4px;
-    padding:5px;
-    font-size: 0.9em;
-  }
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right:0;
+      bottom:0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items:center;
+      justify-content:center;
+      z-index: 9999;
+    }
 
-  .tile-config-modal button {
-    background:#333;
-    color:#fff;
-    border:none;
-    padding:10px 20px;
-    cursor:pointer;
-    margin-top:20px;
-    float:right;
-    font-size: 0.9em;
-  }
+    .modal {
+      background: var(--tile-bg);
+      border-radius: 8px;
+      width: 90%;
+      max-width: 500px;
+      padding: 20px;
+      position: relative;
+      max-height: 90vh;
+      overflow-y: auto;
+      color: var(--text-color);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
 
-  .tile.move-mode {
-    outline: 2px dashed #333;
-  }
+    .modal h2 {
+      margin-top:0;
+      font-size: 1.2em;
+      text-align: center;
+    }
 
-  .drag-ghost {
-    position: absolute;
-    z-index: 1000;
-    pointer-events: none;
-    opacity: 0.8;
-  }
-</style>
+    .close-modal {
+      position:absolute;
+      top:10px;
+      right:10px;
+      background:none;
+      border:none;
+      font-size:1.5em;
+      cursor:pointer;
+      color: var(--text-color);
+    }
+
+    .tile-config-modal label {
+      display:block;
+      margin-top:10px;
+      font-weight: bold;
+    }
+
+    .tile-config-modal input[type="text"],
+    .tile-config-modal input[type="number"],
+    .tile-config-modal textarea,
+    .tile-config-modal select {
+      width:100%;
+      margin-bottom:10px;
+      box-sizing:border-box;
+      background: var(--bg-color);
+      color: var(--text-color);
+      border: 1px solid var(--tile-border);
+      border-radius: 4px;
+      padding:8px;
+      font-size: 0.9em;
+    }
+
+    .tile-config-modal button {
+      background:#007BFF;
+      color:#fff;
+      border:none;
+      padding:10px 20px;
+      cursor:pointer;
+      margin-top:10px;
+      border-radius: 4px;
+      font-size: 0.9em;
+      transition: background 0.3s;
+    }
+
+    .tile-config-modal button:hover {
+      background:#0056b3;
+    }
+
+    .tile.move-mode {
+      outline: 2px dashed #007BFF;
+    }
+
+    .drag-ghost {
+      position: absolute;
+      z-index: 1000;
+      pointer-events: none;
+      opacity: 0.8;
+      width: 100px;
+      height: 100px;
+      transform: rotate(5deg);
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 600px) {
+      .modal {
+        width: 95%;
+      }
+
+      #add-tile-button, #theme-toggle {
+        padding: 5px 8px;
+        font-size: 16px;
+      }
+
+      .tile-menu li {
+        padding: 8px 12px;
+      }
+    }
+  </style>
 </head>
 <body>
-<header>
-  <h1>My Custom Dashboard</h1>
-  <button id="theme-toggle">Toggle Theme</button>
-  <button id="add-tile-button">+</button>
-</header>
+  <header>
+    <h1>My Custom Dashboard</h1>
+    <button id="theme-toggle">Toggle Theme</button>
+    <button id="add-tile-button">+</button>
+  </header>
 
-<div id="dashboard"></div>
+  <div id="dashboard"></div>
 
-<footer>
-  <p>&copy; 2024 My Dashboard</p>
-</footer>
+  <footer>
+    <p>&copy; 2024 My Dashboard</p>
+  </footer>
 
-<!-- Add Tile Modal -->
-<div class="overlay" id="add-tile-overlay">
-  <div class="modal add-tile-list">
-    <button class="close-modal" id="close-add-tile">&times;</button>
-    <h2>Add a New Tile</h2>
-    <ul>
-      <li data-tile-type="weather">Weather Tile</li>
-      <li data-tile-type="stock">Stock Tile</li>
-      <li data-tile-type="rss">RSS News Tile</li>
-      <li data-tile-type="quote">Quote Tile</li>
-      <li data-tile-type="crypto">Crypto Tile</li>
-      <li data-tile-type="notes">Notes Tile</li>
-      <li data-tile-type="clock">Clock Tile</li>
-    </ul>
+  <!-- Add Tile Modal -->
+  <div class="overlay" id="add-tile-overlay">
+    <div class="modal add-tile-list">
+      <button class="close-modal" id="close-add-tile">&times;</button>
+      <h2>Add a New Tile</h2>
+      <ul>
+        <li data-tile-type="weather">Weather Tile</li>
+        <li data-tile-type="stock">Stock Tile</li>
+        <li data-tile-type="rss">RSS News Tile</li>
+        <li data-tile-type="quote">Quote Tile</li>
+        <li data-tile-type="crypto">Crypto Tile</li>
+        <li data-tile-type="notes">Notes Tile</li>
+        <li data-tile-type="clock">Clock Tile</li>
+      </ul>
+    </div>
   </div>
-</div>
 
-<!-- Configure Tile Modal -->
-<div class="overlay" id="config-overlay">
-  <div class="modal tile-config-modal">
-    <button class="close-modal" id="close-config-modal">&times;</button>
-    <h2>Configure Tile</h2>
-    <form id="config-form"></form>
-    <button id="save-config">Save</button>
+  <!-- Configure Tile Modal -->
+  <div class="overlay" id="config-overlay">
+    <div class="modal tile-config-modal">
+      <button class="close-modal" id="close-config-modal">&times;</button>
+      <h2>Configure Tile</h2>
+      <form id="config-form"></form>
+      <button id="save-config">Save</button>
+    </div>
   </div>
-</div>
 
-<script>
-  // Remove forced sizing from setGridSize and only set rows/columns.
-  // Let the grid fill available space naturally.
+  <script>
+    // API Keys
+    const WEATHER_API_KEY = "33dfd53a9d3d81f2922261c29bc94c06";
+    const FINNHUB_API_KEY = "ctcpibpr01qlc0uvah90ctcpibpr01qlc0uvah9g";
 
-  const WEATHER_API_KEY = "33dfd53a9d3d81f2922261c29bc94c06";
-  const FINNHUB_API_KEY = "ctcpibpr01qlc0uvah90ctcpibpr01qlc0uvah9g";
+    // Theme Initialization
+    const savedTheme = localStorage.getItem("dashboardTheme");
+    if (savedTheme === "dark") {
+      document.body.classList.add("dark-mode");
+    }
 
-  const savedTheme = localStorage.getItem("dashboardTheme");
-  if (savedTheme === "dark") {
-    document.body.classList.add("dark-mode");
-  }
-
-  let tilesConfig = {
-    tiles: [
-      {
-        id: "weather-1",
-        type: "weather",
-        visible: true,
-        config: {
-          city: "Morgantown",
-          countryCode: "US",
-          unit: "imperial",
-          updateInterval: 30
+    // Initial Tiles Configuration
+    let tilesConfig = {
+      tiles: [
+        {
+          id: "weather-1",
+          type: "weather",
+          visible: true,
+          config: {
+            city: "Morgantown",
+            countryCode: "US",
+            unit: "imperial",
+            updateInterval: 30
+          }
+        },
+        {
+          id: "stock-1",
+          type: "stock",
+          visible: true,
+          config: {
+            symbol: "QUBT",
+            updateInterval: 1
+          }
         }
-      },
-      {
-        id: "stock-1",
-        type: "stock",
-        visible: true,
-        config: {
-          symbol: "QUBT",
-          updateInterval: 1
+      ]
+    };
+
+    // Load Saved Configuration
+    const savedConfig = localStorage.getItem("dashboardConfig");
+    if (savedConfig) {
+      tilesConfig = JSON.parse(savedConfig);
+    }
+
+    // State Variables
+    let moveMode = false; 
+    let currentlyOpenMenu = null; 
+    let currentConfigTile = null;
+    const tileTimers = {};
+
+    // DOM Elements
+    const dashboard = document.getElementById("dashboard");
+    const addTileOverlay = document.getElementById("add-tile-overlay");
+    const closeAddTileBtn = document.getElementById("close-add-tile");
+    const addTileButton = document.getElementById("add-tile-button");
+    const configOverlay = document.getElementById("config-overlay");
+    const closeConfigModalBtn = document.getElementById("close-config-modal");
+    const configForm = document.getElementById("config-form");
+    const saveConfigBtn = document.getElementById("save-config");
+    const themeToggleBtn = document.getElementById("theme-toggle");
+
+    // Event Listeners
+
+    // Theme Toggle
+    themeToggleBtn.addEventListener("click", () => {
+      document.body.classList.toggle("dark-mode");
+      localStorage.setItem("dashboardTheme", document.body.classList.contains("dark-mode") ? "dark" : "light");
+    });
+
+    // Open Add Tile Modal
+    addTileButton.addEventListener("click", () => {
+      addTileOverlay.style.display = "flex";
+    });
+
+    // Close Add Tile Modal
+    closeAddTileBtn.addEventListener("click", () => {
+      addTileOverlay.style.display = "none";
+    });
+
+    // Add Tile from List
+    document.querySelectorAll(".add-tile-list li").forEach(li => {
+      li.addEventListener("click", () => {
+        const type = li.getAttribute("data-tile-type");
+        addNewTile(type);
+        addTileOverlay.style.display = "none";
+      });
+    });
+
+    // Close Configure Modal
+    closeConfigModalBtn.addEventListener("click", () => {
+      configOverlay.style.display = "none";
+      currentConfigTile = null;
+    });
+
+    // Save Configuration
+    saveConfigBtn.addEventListener("click", () => {
+      if (!currentConfigTile) return;
+      const formData = new FormData(configForm);
+      
+      for (let [key, value] of formData.entries()) {
+        if (currentConfigTile.type === "rss" && key === "limit") {
+          value = parseInt(value, 10);
         }
+        if (currentConfigTile.type === "stock" && key === "updateInterval") {
+          value = parseInt(value, 10);
+        }
+        if (currentConfigTile.type === "weather" && key === "updateInterval") {
+          value = parseInt(value, 10);
+        }
+        currentConfigTile.config[key] = value;
       }
-    ]
-  };
 
-  const savedConfig = localStorage.getItem("dashboardConfig");
-  if (savedConfig) {
-    tilesConfig = JSON.parse(savedConfig);
-  }
+      saveConfig();
+      configOverlay.style.display = "none";
+      currentConfigTile = null;
+      renderTiles();
+    });
 
-  let moveMode = false; 
-  let currentlyOpenMenu = null; 
-  let currentConfigTile = null;
-  const tileTimers = {};
-  const dashboard = document.getElementById("dashboard");
-  const addTileOverlay = document.getElementById("add-tile-overlay");
-  const closeAddTileBtn = document.getElementById("close-add-tile");
-  const addTileButton = document.getElementById("add-tile-button");
-  const configOverlay = document.getElementById("config-overlay");
-  const closeConfigModalBtn = document.getElementById("close-config-modal");
-  const configForm = document.getElementById("config-form");
-  const saveConfigBtn = document.getElementById("save-config");
-  const themeToggleBtn = document.getElementById("theme-toggle");
+    // Prevent Duplicate Event Listeners
+    // Ensure the script runs only once by checking a flag
+    if (!window.dashboardInitialized) {
+      window.dashboardInitialized = true;
 
-  themeToggleBtn.addEventListener("click", () => {
-    document.body.classList.toggle("dark-mode");
-    localStorage.setItem("dashboardTheme", document.body.classList.contains("dark-mode") ? "dark" : "light");
-  });
-
-  function setGridSize() {
-    const visibleTiles = tilesConfig.tiles.filter(t => t.visible);
-    const N = visibleTiles.length;
-    let s;
-    if (N === 0) {
-      s = 1;
-    } else if (N <= 4) {
-      s = 2;
-    } else if (N <= 9) {
-      s = 3;
-    } else {
-      s = 4;
+      // Initialize the dashboard
+      renderTiles();
     }
 
-    // Just set the rows/columns. The grid will fill available space from flex.
-    dashboard.style.gridTemplateColumns = `repeat(${s}, 1fr)`;
-    dashboard.style.gridTemplateRows = `repeat(${s}, 1fr)`;
-  }
+    // Fetch Functions
 
-  window.addEventListener('resize', () => {
-    setGridSize();
-  });
-
-  function renderTiles() {
-    const tilesToRender = tilesConfig.tiles.filter(t => t.visible).slice(0,16);
-    console.log("Rendering tiles:", tilesToRender.map(t => t.id));
-    setGridSize();
-    dashboard.innerHTML = '';
-
-    for (let id in tileTimers) {
-      clearTimeout(tileTimers[id]);
-      delete tileTimers[id];
+    async function fetchWeather(tile) {
+      const { city, countryCode, unit } = tile.config;
+      const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)},${encodeURIComponent(countryCode)}&units=${unit}&appid=${WEATHER_API_KEY}`;
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          console.error("Weather request failed:", response.status, response.statusText);
+          return null;
+        }
+        return await response.json();
+      } catch (err) {
+        console.error("Weather fetch error:", err);
+        return null;
+      }
     }
 
-    tilesToRender.forEach(tile => renderTile(tile));
-  }
-
-  async function renderTile(tile) {
-    console.log("Rendering tile:", tile.id);
-    let tileEl = document.querySelector(`[data-tile-id="${tile.id}"]`);
-    if (!tileEl) {
-      tileEl = document.createElement("div");
-      tileEl.className = "tile";
-      tileEl.setAttribute("data-tile-id", tile.id);
-      tileEl.setAttribute("draggable", moveMode.toString());
-      if (moveMode) tileEl.classList.add("move-mode");
-      dashboard.appendChild(tileEl);
-    } else {
-      tileEl.innerHTML = '';
-      tileEl.classList.toggle("move-mode", moveMode);
+    async function fetchStock(tile) {
+      const { symbol } = tile.config;
+      const url = `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${FINNHUB_API_KEY}`;
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          console.error("Stock request failed:", response.status, response.statusText);
+          return null;
+        }
+        return await response.json();
+      } catch (err) {
+        console.error("Stock fetch error:", err);
+        return null;
+      }
     }
 
-    tileEl.innerHTML = `
-      <button class="tile-menu-button">⋮</button>
-      <div class="tile-menu" style="display:none;">
-        <ul>
-          <li class="configure-tile">Configure</li>
-          <li class="move-tile">${moveMode ? 'Stop Moving' : 'Move'}</li>
-          <li class="remove-tile">Remove</li>
-        </ul>
-      </div>
-    `;
+    async function fetchRSS(tile) {
+      const { url, limit } = tile.config;
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          console.error("RSS request failed:", response.status, response.statusText);
+          return null;
+        }
+        const data = await response.json();
+        if (!data || !data.items) return null;
+        return data.items.slice(0, limit);
+      } catch (err) {
+        console.error("RSS fetch error:", err);
+        return null;
+      }
+    }
 
-    try {
-      let data;
+    async function fetchQuote(tile) {
+      const url = "https://api.quotable.io/random";
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          console.error("Quote request failed:", response.status, response.statusText);
+          return null;
+        }
+        return await response.json();
+      } catch (err) {
+        console.error("Quote fetch error:", err);
+        return null;
+      }
+    }
+
+    async function fetchCrypto(tile) {
+      const { coinId, currency } = tile.config;
+      const url = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(coinId)}&vs_currencies=${encodeURIComponent(currency)}`;
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          console.error("Crypto request failed:", response.status, response.statusText);
+          return null;
+        }
+        return await response.json();
+      } catch (err) {
+        console.error("Crypto fetch error:", err);
+        return null;
+      }
+    }
+
+    function updateClock(tile, el) {
+      const now = new Date();
+      let hours = now.getHours();
+      let minutes = now.getMinutes().toString().padStart(2, '0');
+      let seconds = now.getSeconds().toString().padStart(2, '0');
+
+      if (tile.config.format === "12h") {
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        el.textContent = `${hours}:${minutes}:${seconds} ${ampm}`;
+      } else {
+        el.textContent = `${hours.toString().padStart(2, '0')}:${minutes}:${seconds}`;
+      }
+    }
+
+    // Grid Setup
+    function setGridSize() {
+      const visibleTiles = tilesConfig.tiles.filter(t => t.visible);
+      const N = visibleTiles.length;
+      let s;
+      if (N === 0) {
+        s = 1;
+      } else if (N <= 4) {
+        s = 2;
+      } else if (N <= 9) {
+        s = 3;
+      } else {
+        s = 4;
+      }
+
+      // Set grid columns and rows based on the number of tiles
+      dashboard.style.gridTemplateColumns = `repeat(${s}, 1fr)`;
+      dashboard.style.gridTemplateRows = `repeat(${s}, 1fr)`;
+    }
+
+    window.addEventListener('resize', () => {
+      setGridSize();
+    });
+
+    // Rendering Functions
+
+    function renderTiles() {
+      const tilesToRender = tilesConfig.tiles.filter(t => t.visible).slice(0,16);
+      console.log("Rendering tiles:", tilesToRender.map(t => t.id));
+      setGridSize();
+      dashboard.innerHTML = '';
+
+      // Clear existing timers
+      for (let id in tileTimers) {
+        clearTimeout(tileTimers[id]);
+        delete tileTimers[id];
+      }
+
+      tilesToRender.forEach(tile => renderTile(tile));
+    }
+
+    async function renderTile(tile) {
+      console.log("Rendering tile:", tile.id);
+      let tileEl = document.querySelector(`[data-tile-id="${tile.id}"]`);
+      if (!tileEl) {
+        tileEl = document.createElement("div");
+        tileEl.className = "tile";
+        tileEl.setAttribute("data-tile-id", tile.id);
+        tileEl.setAttribute("draggable", moveMode.toString());
+        if (moveMode) tileEl.classList.add("move-mode");
+        dashboard.appendChild(tileEl);
+      } else {
+        tileEl.innerHTML = '';
+        tileEl.classList.toggle("move-mode", moveMode);
+      }
+
+      // Tile Menu Button and Menu
+      tileEl.innerHTML = `
+        <button class="tile-menu-button" aria-haspopup="true" aria-expanded="false">⋮</button>
+        <div class="tile-menu" role="menu">
+          <ul>
+            <li class="configure-tile" role="menuitem">Configure</li>
+            <li class="move-tile" role="menuitem">${moveMode ? 'Stop Moving' : 'Move'}</li>
+            <li class="remove-tile" role="menuitem">Remove</li>
+          </ul>
+        </div>
+      `;
+
+      try {
+        let data;
+        if (tile.type === "weather") {
+          data = await fetchWeather(tile);
+          if (!data || !data.weather || !data.sys) throw new Error("Incomplete weather data");
+          const unitSymbol = (tile.config.unit === "metric") ? "°C" : "°F";
+          tileEl.innerHTML += `
+            <img class="icon" src="https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png" alt="Weather Icon">
+            <h2>Weather</h2>
+            <p><strong>${data.name}, ${data.sys.country}</strong></p>
+            <p>${Math.round(data.main.temp)} ${unitSymbol}, ${data.weather[0].description}</p>
+            <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
+          `;
+        } else if (tile.type === "stock") {
+          data = await fetchStock(tile);
+          if (!data || typeof data.c === 'undefined') throw new Error("Incomplete stock data");
+          tileEl.innerHTML += `
+            <img class="icon" src="stock_icon.png" alt="Stock Icon">
+            <h2>Stock: ${tile.config.symbol}</h2>
+            <p>Price: $${data.c.toFixed(2)}</p>
+            <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
+          `;
+        } else if (tile.type === "rss") {
+          const rssData = await fetchRSS(tile);
+          if (!rssData || !Array.isArray(rssData) || rssData.length === 0) throw new Error("No RSS articles returned");
+          tileEl.innerHTML += `
+            <img class="icon" src="rss_icon.png" alt="RSS Icon">
+            <h2>News</h2>
+          `;
+          rssData.forEach(a => {
+            tileEl.innerHTML += `<p><a href="${a.link}" target="_blank">${a.title}</a></p>`;
+          });
+          tileEl.innerHTML += `<div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>`;
+        } else if (tile.type === "quote") {
+          data = await fetchQuote(tile);
+          if (!data || !data.content || !data.author) throw new Error("Incomplete quote data");
+          tileEl.innerHTML += `
+            <img class="icon" src="quote_icon.png" alt="Quote Icon">
+            <h2>Quote</h2>
+            <p>"${data.content}"<br>- ${data.author}</p>
+            <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
+          `;
+        } else if (tile.type === "crypto") {
+          data = await fetchCrypto(tile);
+          const price = data?.[tile.config.coinId]?.[tile.config.currency];
+          if (typeof price === 'undefined') throw new Error("Incomplete crypto data");
+          tileEl.innerHTML += `
+            <img class="icon" src="crypto_icon.png" alt="Crypto Icon">
+            <h2>${tile.config.coinId.charAt(0).toUpperCase() + tile.config.coinId.slice(1)} Price</h2>
+            <p>${price} ${tile.config.currency.toUpperCase()}</p>
+            <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
+          `;
+        } else if (tile.type === "notes") {
+          tileEl.innerHTML += `
+            <img class="icon" src="notes_icon.png" alt="Notes Icon">
+            <h2>Notes</h2>
+            <p>${tile.config.text.replace(/\n/g, "<br>")}</p>
+          `;
+        } else if (tile.type === "clock") {
+          tileEl.innerHTML += `
+            <img class="icon" src="clock_icon.png" alt="Clock Icon">
+            <h2>Clock</h2>
+            <p id="clock-${tile.id}"></p>
+          `;
+          const clockEl = tileEl.querySelector(`#clock-${tile.id}`);
+          updateClock(tile, clockEl);
+          if (!tileTimers[tile.id]) {
+            tileTimers[tile.id] = setInterval(() => updateClock(tile, clockEl), 1000);
+          }
+        } else {
+          throw new Error("Unknown tile type");
+        }
+      } catch (err) {
+        console.error("Error rendering tile:", tile.type, tile.id, err);
+        tileEl.innerHTML += `<p>Error loading data</p>`;
+      }
+
+      // Attach Menu Handlers
+      attachTileMenuHandlers(tileEl, tile);
+
+      // Interval Re-rendering
+      if (tile.type !== "clock" && tile.config.updateInterval && Number(tile.config.updateInterval) > 0) {
+        if (tileTimers[tile.id]) {
+          clearTimeout(tileTimers[tile.id]);
+        }
+        tileTimers[tile.id] = setTimeout(() => {
+          const stillVisible = tilesConfig.tiles.some(t => t.id === tile.id && t.visible);
+          console.log(`Interval re-check for ${tile.id}. Still visible?`, stillVisible);
+          if (stillVisible) {
+            console.log(`Re-rendering from interval due to ${tile.id}`);
+            renderTiles();
+          } else {
+            console.log(`Tile ${tile.id} no longer visible, skipping interval re-render.`);
+          }
+        }, tile.config.updateInterval * 60 * 1000);
+      }
+    }
+
+    function attachTileMenuHandlers(tileEl, tile) {
+      const menuButton = tileEl.querySelector(".tile-menu-button");
+      const tileMenu = tileEl.querySelector(".tile-menu");
+
+      // Toggle Menu Visibility
+      menuButton.addEventListener("click", (e) => {
+        e.stopPropagation();
+        closeAnyOpenMenu();
+        tileMenu.classList.toggle("show");
+        menuButton.setAttribute("aria-expanded", tileMenu.classList.contains("show"));
+        currentlyOpenMenu = tileMenu.classList.contains("show") ? tileMenu : null;
+      });
+
+      // Configure Tile
+      tileMenu.querySelector(".configure-tile").addEventListener("click", () => {
+        tileMenu.classList.remove("show");
+        menuButton.setAttribute("aria-expanded", "false");
+        currentlyOpenMenu = null;
+        openConfigModal(tile);
+      });
+
+      // Move Tile
+      tileMenu.querySelector(".move-tile").addEventListener("click", () => {
+        tileMenu.classList.remove("show");
+        menuButton.setAttribute("aria-expanded", "false");
+        currentlyOpenMenu = null;
+        toggleMoveMode();
+      });
+
+      // Remove Tile
+      tileMenu.querySelector(".remove-tile").addEventListener("click", () => {
+        tileMenu.classList.remove("show");
+        menuButton.setAttribute("aria-expanded", "false");
+        currentlyOpenMenu = null;
+        removeTile(tile.id);
+      });
+    }
+
+    function closeAnyOpenMenu() {
+      if (currentlyOpenMenu) {
+        currentlyOpenMenu.classList.remove("show");
+        const menuButton = currentlyOpenMenu.parentElement.querySelector(".tile-menu-button");
+        if (menuButton) {
+          menuButton.setAttribute("aria-expanded", "false");
+        }
+        currentlyOpenMenu = null;
+      }
+    }
+
+    // Close menu when clicking outside
+    document.addEventListener("click", (e) => {
+      if (currentlyOpenMenu && !currentlyOpenMenu.contains(e.target) && e.target.className !== "tile-menu-button") {
+        closeAnyOpenMenu();
+      }
+    });
+
+    // Remove Tile Function
+    function removeTile(id) {
+      if (tileTimers[id]) {
+        clearTimeout(tileTimers[id]);
+        delete tileTimers[id];
+      }
+      tilesConfig.tiles = tilesConfig.tiles.filter(t => t.id !== id);
+      saveConfig();
+      renderTiles();
+    }
+
+    // Reorder Tiles Function (Drag and Drop)
+    function reorderTiles(draggedTileId, targetTileId) {
+      const draggedIndex = tilesConfig.tiles.findIndex(t => t.id === draggedTileId);
+      const targetIndex = tilesConfig.tiles.findIndex(t => t.id === targetTileId);
+
+      if (draggedIndex < 0 || targetIndex < 0 || draggedIndex === targetIndex) return;
+
+      const draggedTile = tilesConfig.tiles.splice(draggedIndex, 1)[0];
+      tilesConfig.tiles.splice(targetIndex, 0, draggedTile);
+
+      saveConfig();
+      renderTiles();
+    }
+
+    // Toggle Move Mode
+    function toggleMoveMode() {
+      moveMode = !moveMode;
+      console.log("Move mode:", moveMode);
+      renderTiles();
+    }
+
+    // Add New Tile Function
+    function addNewTile(type) {
+      // Generate a unique ID using timestamp and a random component
+      const id = `${type}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      if (tilesConfig.tiles.some(t => t.id === id)) {
+        console.warn("A tile with this id already exists, skipping:", id);
+        return;
+      }
+
+      const config = getDefaultConfigForTileType(type);
+      tilesConfig.tiles.push({
+        id: id,
+        type: type,
+        visible: true,
+        config: config
+      });
+      console.log("Added new tile:", id, "of type:", type);
+      console.log("tilesConfig now:", tilesConfig.tiles.map(t => t.id));
+      saveConfig();
+      renderTiles();
+    }
+
+    // Get Default Configuration for Tile Type
+    function getDefaultConfigForTileType(type) {
+      if (type === "weather") return { city: "Morgantown", countryCode: "US", unit: "imperial", updateInterval: 30 };
+      if (type === "stock") return { symbol: "QUBT", updateInterval: 1 };
+      if (type === "rss") return { url: "https://api.rss2json.com/v1/api.json?rss_url=https://news.google.com/rss", limit: 5 };
+      if (type === "quote") return {};
+      if (type === "crypto") return { coinId: "bitcoin", currency: "usd" };
+      if (type === "notes") return { text: "Enter your notes here..." };
+      if (type === "clock") return { format: "12h" };
+      return {};
+    }
+
+    // Open Configuration Modal
+    function openConfigModal(tile) {
+      currentConfigTile = tile;
+      configForm.innerHTML = '';
+
       if (tile.type === "weather") {
-        data = await fetchWeather(tile);
-        if (!data || !data.weather || !data.sys) throw new Error("Incomplete weather data");
-        const unitSymbol = (tile.config.unit === "metric") ? "°C" : "°F";
-        tileEl.innerHTML += `
-          <img class="icon" src="https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png" alt="Weather Icon">
-          <h2>Weather</h2>
-          <p><strong>${data.name}, ${data.sys.country}</strong></p>
-          <p>${Math.round(data.main.temp)} ${unitSymbol}, ${data.weather[0].description}</p>
-          <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
+        configForm.innerHTML = `
+          <label>City:</label>
+          <input type="text" name="city" value="${tile.config.city}">
+          <label>Country Code:</label>
+          <input type="text" name="countryCode" value="${tile.config.countryCode}">
+          <label>Unit:</label>
+          <select name="unit">
+            <option value="metric" ${tile.config.unit === "metric" ? "selected" : ""}>Celsius</option>
+            <option value="imperial" ${tile.config.unit === "imperial" ? "selected" : ""}>Fahrenheit</option>
+          </select>
+          <label>Update Interval (minutes):</label>
+          <input type="number" name="updateInterval" value="${tile.config.updateInterval || 5}">
         `;
       } else if (tile.type === "stock") {
-        data = await fetchStock(tile);
-        if (!data || typeof data.c === 'undefined') throw new Error("Incomplete stock data");
-        tileEl.innerHTML += `
-          <img class="icon" src="stock_icon.png" alt="Stock Icon">
-          <h2>Stock: ${tile.config.symbol}</h2>
-          <p>Price: $${data.c.toFixed(2)}</p>
-          <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
+        configForm.innerHTML = `
+          <label>Symbol:</label>
+          <input type="text" name="symbol" value="${tile.config.symbol}">
+          <label>Update Interval (minutes):</label>
+          <input type="number" name="updateInterval" value="${tile.config.updateInterval || 5}">
         `;
       } else if (tile.type === "rss") {
-        const rssData = await fetchRSS(tile);
-        if (!rssData || !Array.isArray(rssData) || rssData.length === 0) throw new Error("No RSS articles returned");
-        tileEl.innerHTML += `
-          <img class="icon" src="rss_icon.png" alt="RSS Icon">
-          <h2>News</h2>
+        configForm.innerHTML = `
+          <label>RSS URL (JSON):</label>
+          <input type="text" name="url" value="${tile.config.url}">
+          <label>Limit:</label>
+          <input type="number" name="limit" value="${tile.config.limit}">
         `;
-        rssData.forEach(a => {
-          tileEl.innerHTML += `<p><a href="${a.link}" target="_blank">${a.title}</a></p>`;
-        });
-        tileEl.innerHTML += `<div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>`;
       } else if (tile.type === "quote") {
-        data = await fetchQuote(tile);
-        if (!data || !data.content || !data.author) throw new Error("Incomplete quote data");
-        tileEl.innerHTML += `
-          <img class="icon" src="quote_icon.png" alt="Quote Icon">
-          <h2>Quote</h2>
-          <p>"${data.content}"<br>- ${data.author}</p>
-          <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
-        `;
+        configForm.innerHTML = `<p>No additional configuration needed.</p>`;
       } else if (tile.type === "crypto") {
-        data = await fetchCrypto(tile);
-        const price = data?.[tile.config.coinId]?.[tile.config.currency];
-        if (typeof price === 'undefined') throw new Error("Incomplete crypto data");
-        tileEl.innerHTML += `
-          <img class="icon" src="crypto_icon.png" alt="Crypto Icon">
-          <h2>${tile.config.coinId.charAt(0).toUpperCase() + tile.config.coinId.slice(1)} Price</h2>
-          <p>${price} ${tile.config.currency.toUpperCase()}</p>
-          <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
+        configForm.innerHTML = `
+          <label>Coin ID:</label>
+          <input type="text" name="coinId" value="${tile.config.coinId}">
+          <label>Currency:</label>
+          <input type="text" name="currency" value="${tile.config.currency}">
         `;
       } else if (tile.type === "notes") {
-        tileEl.innerHTML += `
-          <img class="icon" src="notes_icon.png" alt="Notes Icon">
-          <h2>Notes</h2>
-          <p>${tile.config.text.replace(/\n/g, "<br>")}</p>
+        configForm.innerHTML = `
+          <label>Notes:</label>
+          <textarea name="text" rows="5">${tile.config.text}</textarea>
         `;
       } else if (tile.type === "clock") {
-        tileEl.innerHTML += `
-          <img class="icon" src="clock_icon.png" alt="Clock Icon">
-          <h2>Clock</h2>
-          <p id="clock-${tile.id}"></p>
+        configForm.innerHTML = `
+          <label>Format:</label>
+          <select name="format">
+            <option value="24h" ${tile.config.format === "24h" ? 'selected' : ''}>24-hour</option>
+            <option value="12h" ${tile.config.format === "12h" ? 'selected' : ''}>12-hour</option>
+          </select>
         `;
-        const clockEl = tileEl.querySelector(`#clock-${tile.id}`);
-        updateClock(tile, clockEl);
-        if (!tileTimers[tile.id]) {
-          tileTimers[tile.id] = setInterval(() => updateClock(tile, clockEl), 1000);
+      }
+
+      configOverlay.style.display = "flex";
+    }
+
+    // Save Configuration to Local Storage
+    function saveConfig() {
+      localStorage.setItem("dashboardConfig", JSON.stringify(tilesConfig));
+    }
+
+    // Drag and Drop Functionality
+    let draggedTile = null;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let ghostEl = null;
+
+    function onPointerDown(e) {
+      if (!e.target.closest('.tile') || moveMode === false) return;
+      const tileEl = e.target.closest('.tile');
+      draggedTile = tileEl;
+      const rect = tileEl.getBoundingClientRect();
+      dragStartX = e.clientX - rect.left;
+      dragStartY = e.clientY - rect.top;
+      tileEl.setPointerCapture(e.pointerId);
+    }
+
+    function onPointerMove(e) {
+      if (!draggedTile) return;
+      if (!ghostEl) {
+        ghostEl = draggedTile.cloneNode(true);
+        ghostEl.classList.add('drag-ghost');
+        document.body.appendChild(ghostEl);
+      }
+      ghostEl.style.left = (e.clientX - dragStartX) + 'px';
+      ghostEl.style.top = (e.clientY - dragStartY) + 'px';
+    }
+
+    function onPointerUp(e) {
+      if (!draggedTile) return;
+      draggedTile.releasePointerCapture(e.pointerId);
+      if (ghostEl) {
+        const dropTile = document.elementFromPoint(e.clientX, e.clientY)?.closest('.tile');
+        if (dropTile && dropTile !== draggedTile) {
+          const tileId = draggedTile.getAttribute('data-tile-id');
+          const targetTileId = dropTile.getAttribute('data-tile-id');
+          reorderTiles(tileId, targetTileId);
         }
-      } else {
-        throw new Error("Unknown tile type");
+        document.body.removeChild(ghostEl);
+        ghostEl = null;
       }
-    } catch (err) {
-      console.error("Error rendering tile:", tile.type, tile.id, err);
-      tileEl.innerHTML += `<p>Error loading data</p>`;
+      draggedTile = null;
     }
 
-    attachTileMenuHandlers(tileEl, tile);
+    dashboard.addEventListener('pointerdown', onPointerDown);
+    dashboard.addEventListener('pointermove', onPointerMove);
+    dashboard.addEventListener('pointerup', onPointerUp);
+    dashboard.addEventListener('pointercancel', onPointerUp);
 
-    // Instead of calling renderTile again after interval, re-render all tiles for consistency
-    if (tile.type !== "clock" && tile.config.updateInterval && Number(tile.config.updateInterval) > 0) {
-      if (tileTimers[tile.id]) {
-        clearTimeout(tileTimers[tile.id]);
-      }
-      tileTimers[tile.id] = setTimeout(() => {
-        const stillVisible = tilesConfig.tiles.some(t => t.id === tile.id && t.visible);
-        console.log(`Interval re-check for ${tile.id}. Still visible?`, stillVisible);
-        if (stillVisible) {
-          console.log(`Re-rendering from interval due to ${tile.id}`);
-          renderTiles();
-        } else {
-          console.log(`Tile ${tile.id} no longer visible, skipping interval re-render.`);
-        }
-      }, tile.config.updateInterval * 60 * 1000);
-    }
-  }
-
-  function attachTileMenuHandlers(tileEl, tile) {
-    const menuButton = tileEl.querySelector(".tile-menu-button");
-    const tileMenu = tileEl.querySelector(".tile-menu");
-
-    menuButton.addEventListener("click", (e) => {
-      e.stopPropagation();
-      closeAnyOpenMenu();
-      tileMenu.style.display = "block";
-      currentlyOpenMenu = tileMenu;
-    });
-
-    tileMenu.querySelector(".configure-tile").addEventListener("click", () => {
-      tileMenu.style.display = "none";
-      currentlyOpenMenu = null;
-      openConfigModal(tile);
-    });
-    tileMenu.querySelector(".move-tile").addEventListener("click", () => {
-      tileMenu.style.display = "none";
-      currentlyOpenMenu = null;
-      toggleMoveMode();
-    });
-    tileMenu.querySelector(".remove-tile").addEventListener("click", () => {
-      tileMenu.style.display = "none";
-      currentlyOpenMenu = null;
-      removeTile(tile.id);
-    });
-  }
-
-  function closeAnyOpenMenu() {
-    if (currentlyOpenMenu) {
-      currentlyOpenMenu.style.display = "none";
-      currentlyOpenMenu = null;
-    }
-  }
-
-  document.addEventListener("click", (e) => {
-    if (currentlyOpenMenu && !currentlyOpenMenu.contains(e.target) && e.target.className !== "tile-menu-button") {
-      closeAnyOpenMenu();
-    }
-  });
-
-  function removeTile(id) {
-    if (tileTimers[id]) {
-      clearTimeout(tileTimers[id]);
-      delete tileTimers[id];
-    }
-    tilesConfig.tiles = tilesConfig.tiles.filter(t => t.id !== id);
-    saveConfig();
+    // Initial Render
     renderTiles();
-  }
-
-  function reorderTiles(draggedTileId, targetTileId) {
-    const draggedIndex = tilesConfig.tiles.findIndex(t => t.id === draggedTileId);
-    const targetIndex = tilesConfig.tiles.findIndex(t => t.id === targetTileId);
-
-    if (draggedIndex < 0 || targetIndex < 0 || draggedIndex === targetIndex) return;
-
-    const draggedTile = tilesConfig.tiles.splice(draggedIndex, 1)[0];
-    tilesConfig.tiles.splice(targetIndex, 0, draggedTile);
-
-    saveConfig();
-    renderTiles();
-  }
-
-  function toggleMoveMode() {
-    moveMode = !moveMode;
-    console.log("Move mode:", moveMode);
-    renderTiles();
-  }
-
-  addTileButton.addEventListener("click", () => {
-    addTileOverlay.style.display = "flex";
-  });
-  closeAddTileBtn.addEventListener("click", () => {
-    addTileOverlay.style.display = "none";
-  });
-
-  document.querySelectorAll(".add-tile-list li").forEach(li => {
-    li.addEventListener("click", () => {
-      const type = li.getAttribute("data-tile-type");
-      addNewTile(type);
-      addTileOverlay.style.display = "none";
-    });
-  });
-
-  function addNewTile(type) {
-    const id = type + "-" + Date.now();
-    if (tilesConfig.tiles.some(t => t.id === id)) {
-      console.warn("A tile with this id already exists, skipping:", id);
-      return;
-    }
-
-    const config = getDefaultConfigForTileType(type);
-    tilesConfig.tiles.push({
-      id: id,
-      type: type,
-      visible: true,
-      config: config
-    });
-    console.log("Added new tile:", id, "of type:", type);
-    console.log("tilesConfig now:", tilesConfig.tiles.map(t => t.id));
-    saveConfig();
-    renderTiles();
-  }
-
-  function getDefaultConfigForTileType(type) {
-    if (type === "weather") return { city: "Morgantown", countryCode: "US", unit: "imperial", updateInterval: 30 };
-    if (type === "stock") return { symbol: "QUBT", updateInterval: 1 };
-    if (type === "rss") return { url: "https://api.rss2json.com/v1/api.json?rss_url=https://news.google.com/rss", limit: 5 };
-    if (type === "quote") return {};
-    if (type === "crypto") return { coinId: "bitcoin", currency: "usd" };
-    if (type === "notes") return { text: "Enter your notes here..." };
-    if (type === "clock") return { format: "12h" };
-    return {};
-  }
-
-  function openConfigModal(tile) {
-    currentConfigTile = tile;
-    configForm.innerHTML = '';
-
-    if (tile.type === "weather") {
-      configForm.innerHTML = `
-        <label>City:</label>
-        <input type="text" name="city" value="${tile.config.city}">
-        <label>Country Code:</label>
-        <input type="text" name="countryCode" value="${tile.config.countryCode}">
-        <label>Unit:</label>
-        <select name="unit">
-          <option value="metric" ${tile.config.unit === "metric" ? "selected" : ""}>Celsius</option>
-          <option value="imperial" ${tile.config.unit === "imperial" ? "selected" : ""}>Fahrenheit</option>
-        </select>
-        <label>Update Interval (minutes):</label>
-        <input type="number" name="updateInterval" value="${tile.config.updateInterval || 5}">
-      `;
-    } else if (tile.type === "stock") {
-      configForm.innerHTML = `
-        <label>Symbol:</label>
-        <input type="text" name="symbol" value="${tile.config.symbol}">
-        <label>Update Interval (minutes):</label>
-        <input type="number" name="updateInterval" value="${tile.config.updateInterval || 5}">
-      `;
-    } else if (tile.type === "rss") {
-      configForm.innerHTML = `
-        <label>RSS URL (JSON):</label>
-        <input type="text" name="url" value="${tile.config.url}">
-        <label>Limit:</label>
-        <input type="number" name="limit" value="${tile.config.limit}">
-      `;
-    } else if (tile.type === "quote") {
-      configForm.innerHTML = `<p>No additional configuration needed.</p>`;
-    } else if (tile.type === "crypto") {
-      configForm.innerHTML = `
-        <label>Coin ID:</label>
-        <input type="text" name="coinId" value="${tile.config.coinId}">
-        <label>Currency:</label>
-        <input type="text" name="currency" value="${tile.config.currency}">
-      `;
-    } else if (tile.type === "notes") {
-      configForm.innerHTML = `
-        <label>Notes:</label>
-        <textarea name="text" rows="5">${tile.config.text}</textarea>
-      `;
-    } else if (tile.type === "clock") {
-      configForm.innerHTML = `
-        <label>Format:</label>
-        <select name="format">
-          <option value="24h" ${tile.config.format === "24h" ? 'selected' : ''}>24-hour</option>
-          <option value="12h" ${tile.config.format === "12h" ? 'selected' : ''}>12-hour</option>
-        </select>
-      `;
-    }
-
-    configOverlay.style.display = "flex";
-  }
-
-  closeConfigModalBtn.addEventListener("click", () => {
-    configOverlay.style.display = "none";
-    currentConfigTile = null;
-  });
-
-  saveConfigBtn.addEventListener("click", () => {
-    if (!currentConfigTile) return;
-    const formData = new FormData(configForm);
-    
-    for (let [key, value] of formData.entries()) {
-      if (currentConfigTile.type === "rss" && key === "limit") {
-        value = parseInt(value, 10);
-      }
-      if (currentConfigTile.type === "stock" && key === "updateInterval") {
-        value = parseInt(value, 10);
-      }
-      if (currentConfigTile.type === "weather" && key === "updateInterval") {
-        value = parseInt(value, 10);
-      }
-      currentConfigTile.config[key] = value;
-    }
-
-    saveConfig();
-    configOverlay.style.display = "none";
-    currentConfigTile = null;
-    renderTiles();
-  });
-
-  function saveConfig() {
-    localStorage.setItem("dashboardConfig", JSON.stringify(tilesConfig));
-  }
-
-  let draggedTile = null;
-  let dragStartX = 0;
-  let dragStartY = 0;
-  let ghostEl = null;
-
-  function onPointerDown(e) {
-    if (!e.target.closest('.tile') || moveMode === false) return;
-    const tileEl = e.target.closest('.tile');
-    draggedTile = tileEl;
-    const rect = tileEl.getBoundingClientRect();
-    dragStartX = e.clientX - rect.left;
-    dragStartY = e.clientY - rect.top;
-    tileEl.setPointerCapture(e.pointerId);
-  }
-
-  function onPointerMove(e) {
-    if (!draggedTile) return;
-    if (!ghostEl) {
-      ghostEl = draggedTile.cloneNode(true);
-      ghostEl.classList.add('drag-ghost');
-      document.body.appendChild(ghostEl);
-    }
-    ghostEl.style.left = (e.clientX - dragStartX) + 'px';
-    ghostEl.style.top = (e.clientY - dragStartY) + 'px';
-  }
-
-  function onPointerUp(e) {
-    if (!draggedTile) return;
-    draggedTile.releasePointerCapture(e.pointerId);
-    if (ghostEl) {
-      const dropTile = document.elementFromPoint(e.clientX, e.clientY)?.closest('.tile');
-      if (dropTile && dropTile !== draggedTile) {
-        const allTiles = Array.from(dashboard.querySelectorAll('.tile'));
-        const fromIndex = allTiles.indexOf(draggedTile);
-        const toIndex = allTiles.indexOf(dropTile);
-
-        const tileId = draggedTile.getAttribute('data-tile-id');
-        const fromTileObjIndex = tilesConfig.tiles.findIndex(t => t.id === tileId);
-        const tileObj = tilesConfig.tiles.splice(fromTileObjIndex, 1)[0];
-
-        const toTileId = dropTile.getAttribute('data-tile-id');
-        const toTileObjIndex = tilesConfig.tiles.findIndex(t => t.id === toTileId);
-        tilesConfig.tiles.splice(toTileObjIndex, 0, tileObj);
-
-        saveConfig();
-        renderTiles();
-      }
-      document.body.removeChild(ghostEl);
-      ghostEl = null;
-    }
-    draggedTile = null;
-  }
-
-  dashboard.addEventListener('pointerdown', onPointerDown);
-  dashboard.addEventListener('pointermove', onPointerMove);
-  dashboard.addEventListener('pointerup', onPointerUp);
-  dashboard.addEventListener('pointercancel', onPointerUp);
-
-  addTileButton.addEventListener("click", () => {
-    addTileOverlay.style.display = "flex";
-  });
-  closeAddTileBtn.addEventListener("click", () => {
-    addTileOverlay.style.display = "none";
-  });
-
-  document.querySelectorAll(".add-tile-list li").forEach(li => {
-    li.addEventListener("click", () => {
-      const type = li.getAttribute("data-tile-type");
-      addNewTile(type);
-      addTileOverlay.style.display = "none";
-    });
-  });
-
-  renderTiles();
-</script>
+  </script>
 
 </body>
 </html>
