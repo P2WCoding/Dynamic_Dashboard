@@ -1,40 +1,7 @@
-/* Root Variables for Light and Dark Themes */
-:root {
-  --bg-color: #f2f2f2;
-  --tile-bg: #fff;
-  --text-color: #000;
-  --header-footer-bg: #333;
-  --header-footer-text: #fff;
-  --tile-border: #ccc;
-  --tile-shadow: rgba(0,0,0,0.1);
-  --menu-bg: #fff;
-  --menu-border: #ccc;
-  --menu-hover-bg: #f9f9f9;
-  --context-menu-bg: #fff;
-  --context-menu-border: #ccc;
-  --context-menu-hover-bg: #f1f1f1;
-}
-
-body.dark-mode {
-  --bg-color: #1c1c1c;
-  --tile-bg: #2c2c2c;
-  --text-color: #eee;
-  --header-footer-bg: #111;
-  --header-footer-text: #eee;
-  --tile-border: #444;
-  --tile-shadow: rgba(255,255,255,0.1);
-  --menu-bg: #2c2c2c;
-  --menu-border: #444;
-  --menu-hover-bg: #3c3c3c;
-  --context-menu-bg: #2c2c2c;
-  --context-menu-border: #444;
-  --context-menu-hover-bg: #3c3c3c;
-}
-
-/* Basic Styles */
+/* Apply the new font and a subtle background gradient to the body */
 body {
-  font-family: Arial, sans-serif;
-  background: var(--bg-color);
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(to bottom right, var(--bg-color), #e0e0e0);
   margin: 0;
   padding: 0; 
   display: flex; 
@@ -44,164 +11,147 @@ body {
   touch-action: none;
 }
 
+/* Header & Footer improvements */
 header, footer {
   background: var(--header-footer-bg);
   color: var(--header-footer-text);
   padding: 10px 20px;
   position: relative;
   flex-shrink: 0;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
 header h1 {
   margin: 0;
   display: inline-block;
+  font-weight: 600;
 }
 
-#add-tile-button {
-  position: absolute;
-  right: 20px;
-  top: 10px;
+#add-tile-button, #theme-toggle {
   background: #444;
   border: none;
   color: #fff;
-  padding: 5px 10px;
+  padding: 8px 12px;
   cursor: pointer;
-  font-size: 18px;
+  font-size: 16px;
   border-radius: 4px;
-  transition: background 0.3s;
+  transition: background 0.3s, transform 0.2s;
 }
 
-#add-tile-button:hover {
+#add-tile-button:hover, #theme-toggle:hover {
   background: #555;
+  transform: scale(1.05);
 }
 
-#theme-toggle {
-  position: absolute;
-  right: 60px;
-  top: 10px;
-  background: #444;
-  border: none;
-  color: #fff;
-  padding: 5px 10px;
-  cursor: pointer;
-  font-size: 14px;
-  border-radius: 4px;
-  transition: background 0.3s;
-}
-
-#theme-toggle:hover {
-  background: #555;
-}
-
-/* Dashboard Grid */
+/* Dashboard styling */
 #dashboard {
   flex: 1;
   display: grid;
-  gap: 10px; /* Space between tiles */
+  gap: 15px;
   justify-items: stretch; 
   align-items: stretch;
-  width: 100%;      /* Let the dashboard fill all available width */
-  height: 100%;     /* Let the dashboard fill all available height */
+  width: 100%;
+  height: 100%;
   box-sizing: border-box;
   position: relative;
   touch-action: none;
   margin: 0; 
-  padding: 10px;
-  overflow: auto; /* Allow scrolling if content overflows */
+  padding: 20px;
+  overflow: auto;
 }
 
-/* Tile Styles */
+/* Tile styling: softer, cleaner look */
 .tile {
   background: var(--tile-bg);
-  border-radius: 8px;
-  box-shadow: 0 2px 10px var(--tile-shadow);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px var(--tile-shadow);
   position: relative;
   color: var(--text-color);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 10px;
+  padding: 15px;
   overflow: hidden;
   user-select: none;
   touch-action: none;
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-  transition: transform 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .tile:hover {
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .icon {
-  font-size: 2em; /* Adjust the size as needed */
+  font-size: 2.2em; 
   margin: 0 auto 10px auto;
   color: var(--text-color);
   transition: color 0.3s;
 }
 
 .icon:hover {
-  color: #007BFF; /* Example hover color */
+  color: #007BFF; 
 }
 
 .tile h2 {
   margin: 5px 0;
-  font-size: 1em;
+  font-size: 1.1em;
   text-align: center;
+  font-weight: 500;
+  letter-spacing: 0.5px;
 }
 
 .tile p {
   margin: 5px 0;
-  font-size: 0.9em;
+  font-size: 0.95em;
   text-align: center;
+  line-height: 1.4em;
 }
 
 .updated {
-  font-size: 0.7em;
+  font-size: 0.8em;
   color: var(--text-color);
-  margin-top: 5px;
+  margin-top: 8px;
   text-align: center;
   opacity: 0.7;
 }
 
-/* Custom Context Menu */
+/* Context Menu: cleaner look with softer edges and spacing */
 .context-menu {
   position: absolute;
   background: var(--context-menu-bg);
   border: 1px solid var(--context-menu-border);
-  border-radius: 4px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   display: none;
   z-index: 10000;
   min-width: 150px;
-  transition: opacity 0.3s;
+  transition: opacity 0.3s, transform 0.2s;
+  font-size: 0.95em;
 }
 
 .context-menu ul {
   list-style: none;
   margin: 0;
-  padding: 5px 0;
+  padding: 8px 0;
 }
 
 .context-menu li {
   padding: 8px 15px;
   cursor: pointer;
   transition: background 0.3s;
+  font-weight: 500;
 }
 
 .context-menu li:hover {
   background: var(--context-menu-hover-bg);
 }
 
-/* Footer */
-footer p {
-  margin: 0;
-  flex-shrink: 0;
-}
-
-/* Overlay Styles */
+/* Overlay and Modals */
 .overlay {
   position: fixed;
   top: 0;
@@ -215,10 +165,9 @@ footer p {
   z-index: 9999;
 }
 
-/* Modal Styles */
 .modal {
   background: var(--tile-bg);
-  border-radius: 8px;
+  border-radius: 10px;
   width: 90%;
   max-width: 500px;
   padding: 20px;
@@ -226,13 +175,15 @@ footer p {
   max-height: 90vh;
   overflow-y: auto;
   color: var(--text-color);
-  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.3);
 }
 
 .modal h2 {
   margin-top:0;
-  font-size: 1.2em;
+  font-size: 1.3em;
   text-align: center;
+  font-weight: 600;
+  margin-bottom: 10px;
 }
 
 .close-modal {
@@ -244,13 +195,19 @@ footer p {
   font-size:1.5em;
   cursor:pointer;
   color: var(--text-color);
+  transition: color 0.3s;
 }
 
-/* Configuration Form Styles */
+.close-modal:hover {
+  color: #007BFF;
+}
+
 .tile-config-modal label {
   display:block;
-  margin-top:10px;
-  font-weight: bold;
+  margin-top:15px;
+  font-weight: 600;
+  font-size: 0.95em;
+  margin-bottom: 5px;
 }
 
 .tile-config-modal input[type="text"],
@@ -258,13 +215,13 @@ footer p {
 .tile-config-modal textarea,
 .tile-config-modal select {
   width:100%;
-  margin-bottom:10px;
+  margin-bottom:15px;
   box-sizing:border-box;
   background: var(--bg-color);
   color: var(--text-color);
   border: 1px solid var(--tile-border);
   border-radius: 4px;
-  padding:8px;
+  padding:10px;
   font-size: 0.9em;
 }
 
@@ -274,17 +231,18 @@ footer p {
   border:none;
   padding:10px 20px;
   cursor:pointer;
-  margin-top:10px;
+  margin-top:20px;
   border-radius: 4px;
   font-size: 0.9em;
-  transition: background 0.3s;
+  transition: background 0.3s, transform 0.2s;
 }
 
 .tile-config-modal button:hover {
   background:#0056b3;
+  transform: scale(1.03);
 }
 
-/* Move Mode Outline */
+/* Move Mode */
 .tile.move-mode {
   outline: 2px dashed #007BFF;
 }
@@ -294,10 +252,12 @@ footer p {
   position: absolute;
   z-index: 1000;
   pointer-events: none;
-  opacity: 0.8;
-  width: 100px;
-  height: 100px;
-  transform: rotate(5deg);
+  opacity: 0.85;
+  width: 120px;
+  height: 120px;
+  transform: rotate(3deg);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  border-radius: 8px;
 }
 
 /* Responsive Adjustments */

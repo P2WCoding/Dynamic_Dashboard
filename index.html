@@ -13,6 +13,11 @@
     crossorigin="anonymous"
     referrerpolicy="no-referrer"
   />
+
+  <!-- Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   
   <!-- Link to External CSS -->
   <link rel="stylesheet" href="styles.css">
@@ -20,8 +25,8 @@
 <body>
   <header>
     <h1>My Custom Dashboard</h1>
-    <button id="theme-toggle">Toggle Theme</button>
-    <button id="add-tile-button">+</button>
+    <button id="theme-toggle" title="Toggle Theme"><i class="fas fa-adjust"></i></button>
+    <button id="add-tile-button" title="Add a New Tile"><i class="fas fa-plus"></i></button>
   </header>
 
   <div id="dashboard"></div>
