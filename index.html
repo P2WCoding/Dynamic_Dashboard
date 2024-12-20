@@ -13,7 +13,7 @@
     crossorigin="anonymous"
     referrerpolicy="no-referrer"
   />
-
+  
   <!-- Google Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,6 +25,7 @@
 <body>
   <header>
     <h1>My Custom Dashboard</h1>
+    <!-- Updated Buttons with Icons and Titles for Accessibility -->
     <button id="theme-toggle" title="Toggle Theme"><i class="fas fa-adjust"></i></button>
     <button id="add-tile-button" title="Add a New Tile"><i class="fas fa-plus"></i></button>
   </header>
@@ -38,7 +39,7 @@
   <!-- Add Tile Modal -->
   <div class="overlay" id="add-tile-overlay">
     <div class="modal add-tile-list">
-      <button class="close-modal" id="close-add-tile">&times;</button>
+      <button class="close-modal" id="close-add-tile" title="Close Modal">&times;</button>
       <h2>Add a New Tile</h2>
       <ul>
         <li data-tile-type="weather">Weather Tile</li>
@@ -55,7 +56,7 @@
   <!-- Configure Tile Modal -->
   <div class="overlay" id="config-overlay">
     <div class="modal tile-config-modal">
-      <button class="close-modal" id="close-config-modal">&times;</button>
+      <button class="close-modal" id="close-config-modal" title="Close Modal">&times;</button>
       <h2>Configure Tile</h2>
       <form id="config-form"></form>
       <button id="save-config">Save</button>

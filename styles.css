@@ -1,4 +1,37 @@
-/* Apply the new font and a subtle background gradient to the body */
+/* Root Variables for Light and Dark Themes */
+:root {
+  --bg-color: #f2f2f2;
+  --tile-bg: #fff;
+  --text-color: #000;
+  --header-footer-bg: #333;
+  --header-footer-text: #fff;
+  --tile-border: #ccc;
+  --tile-shadow: rgba(0,0,0,0.1);
+  --menu-bg: #fff;
+  --menu-border: #ccc;
+  --menu-hover-bg: #f9f9f9;
+  --context-menu-bg: #fff;
+  --context-menu-border: #ccc;
+  --context-menu-hover-bg: #f1f1f1;
+}
+
+body.dark-mode {
+  --bg-color: #1c1c1c;
+  --tile-bg: #2c2c2c;
+  --text-color: #eee;
+  --header-footer-bg: #111;
+  --header-footer-text: #eee;
+  --tile-border: #444;
+  --tile-shadow: rgba(255,255,255,0.1);
+  --menu-bg: #2c2c2c;
+  --menu-border: #444;
+  --menu-hover-bg: #3c3c3c;
+  --context-menu-bg: #2c2c2c;
+  --context-menu-border: #444;
+  --context-menu-hover-bg: #3c3c3c;
+}
+
+/* Basic Styles */
 body {
   font-family: 'Inter', sans-serif;
   background: linear-gradient(to bottom right, var(--bg-color), #e0e0e0);
@@ -11,7 +44,6 @@ body {
   touch-action: none;
 }
 
-/* Header & Footer improvements */
 header, footer {
   background: var(--header-footer-bg);
   color: var(--header-footer-text);
@@ -43,24 +75,24 @@ header h1 {
   transform: scale(1.05);
 }
 
-/* Dashboard styling */
+/* Dashboard Grid */
 #dashboard {
   flex: 1;
   display: grid;
-  gap: 15px;
+  gap: 15px; /* Increased gap for better spacing */
   justify-items: stretch; 
   align-items: stretch;
-  width: 100%;
-  height: 100%;
+  width: 100%;      /* Let the dashboard fill all available width */
+  height: 100%;     /* Let the dashboard fill all available height */
   box-sizing: border-box;
   position: relative;
   touch-action: none;
   margin: 0; 
-  padding: 20px;
-  overflow: auto;
+  padding: 20px; /* Increased padding for better spacing */
+  overflow: auto; /* Allow scrolling if content overflows */
 }
 
-/* Tile styling: softer, cleaner look */
+/* Tile Styles */
 .tile {
   background: var(--tile-bg);
   border-radius: 10px;
@@ -87,14 +119,14 @@ header h1 {
 }
 
 .icon {
-  font-size: 2.2em; 
+  font-size: 2.2em; /* Slightly larger icons for better visibility */
   margin: 0 auto 10px auto;
   color: var(--text-color);
   transition: color 0.3s;
 }
 
 .icon:hover {
-  color: #007BFF; 
+  color: #007BFF; /* Highlight color on hover */
 }
 
 .tile h2 {
@@ -120,7 +152,7 @@ header h1 {
   opacity: 0.7;
 }
 
-/* Context Menu: cleaner look with softer edges and spacing */
+/* Custom Context Menu */
 .context-menu {
   position: absolute;
   background: var(--context-menu-bg);
@@ -128,7 +160,7 @@ header h1 {
   border-radius: 6px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   display: none;
-  z-index: 10000;
+  z-index: 10001; /* Higher than tiles but below modals */
   min-width: 150px;
   transition: opacity 0.3s, transform 0.2s;
   font-size: 0.95em;
@@ -151,7 +183,7 @@ header h1 {
   background: var(--context-menu-hover-bg);
 }
 
-/* Overlay and Modals */
+/* Overlay Styles */
 .overlay {
   position: fixed;
   top: 0;
@@ -162,9 +194,10 @@ header h1 {
   display: none;
   align-items:center;
   justify-content:center;
-  z-index: 9999;
+  z-index: 10002; /* Higher than context menu */
 }
 
+/* Modal Styles */
 .modal {
   background: var(--tile-bg);
   border-radius: 10px;
@@ -202,6 +235,7 @@ header h1 {
   color: #007BFF;
 }
 
+/* Configuration Form Styles */
 .tile-config-modal label {
   display:block;
   margin-top:15px;
@@ -242,7 +276,7 @@ header h1 {
   transform: scale(1.03);
 }
 
-/* Move Mode */
+/* Move Mode Outline */
 .tile.move-mode {
   outline: 2px dashed #007BFF;
 }
@@ -250,7 +284,7 @@ header h1 {
 /* Drag Ghost Styles */
 .drag-ghost {
   position: absolute;
-  z-index: 1000;
+  z-index: 10003; /* Highest z-index to appear above all */
   pointer-events: none;
   opacity: 0.85;
   width: 120px;
