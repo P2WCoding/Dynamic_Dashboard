@@ -25,9 +25,15 @@
 <body>
   <header>
     <h1>My Custom Dashboard</h1>
-    <!-- Updated Buttons with Icons and Titles for Accessibility -->
-    <button id="theme-toggle" title="Toggle Theme"><i class="fas fa-adjust"></i></button>
-    <button id="add-tile-button" title="Add a New Tile"><i class="fas fa-plus"></i></button>
+    <div class="header-buttons">
+      <!-- Updated Buttons with Icons and Titles for Accessibility -->
+      <button id="theme-toggle" title="Toggle Theme" aria-label="Toggle Theme">
+        <i class="fas fa-adjust"></i>
+      </button>
+      <button id="add-tile-button" title="Add a New Tile" aria-label="Add a New Tile">
+        <i class="fas fa-plus"></i>
+      </button>
+    </div>
   </header>
 
   <div id="dashboard"></div>
@@ -39,24 +45,45 @@
   <!-- Add Tile Modal -->
   <div class="overlay" id="add-tile-overlay">
     <div class="modal add-tile-list">
-      <button class="close-modal" id="close-add-tile" title="Close Modal">&times;</button>
+      <button class="close-modal" id="close-add-tile" title="Close Modal" aria-label="Close Modal">&times;</button>
       <h2>Add a New Tile</h2>
-      <ul>
-        <li data-tile-type="weather">Weather Tile</li>
-        <li data-tile-type="stock">Stock Tile</li>
-        <li data-tile-type="rss">RSS News Tile</li>
-        <li data-tile-type="quote">Quote Tile</li>
-        <li data-tile-type="crypto">Crypto Tile</li>
-        <li data-tile-type="notes">Notes Tile</li>
-        <li data-tile-type="clock">Clock Tile</li>
-      </ul>
+      <div class="tile-selection">
+        <div class="tile-option" data-tile-type="weather">
+          <i class="fas fa-cloud-sun"></i>
+          <span>Weather</span>
+        </div>
+        <div class="tile-option" data-tile-type="stock">
+          <i class="fas fa-chart-line"></i>
+          <span>Stock</span>
+        </div>
+        <div class="tile-option" data-tile-type="rss">
+          <i class="fas fa-rss"></i>
+          <span>RSS News</span>
+        </div>
+        <div class="tile-option" data-tile-type="quote">
+          <i class="fas fa-quote-right"></i>
+          <span>Quote</span>
+        </div>
+        <div class="tile-option" data-tile-type="crypto">
+          <i class="fas fa-bitcoin-sign"></i>
+          <span>Crypto</span>
+        </div>
+        <div class="tile-option" data-tile-type="notes">
+          <i class="fas fa-sticky-note"></i>
+          <span>Notes</span>
+        </div>
+        <div class="tile-option" data-tile-type="clock">
+          <i class="fas fa-clock"></i>
+          <span>Clock</span>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- Configure Tile Modal -->
   <div class="overlay" id="config-overlay">
     <div class="modal tile-config-modal">
-      <button class="close-modal" id="close-config-modal" title="Close Modal">&times;</button>
+      <button class="close-modal" id="close-config-modal" title="Close Modal" aria-label="Close Modal">&times;</button>
       <h2>Configure Tile</h2>
       <form id="config-form"></form>
       <button id="save-config">Save</button>

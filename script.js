@@ -84,10 +84,10 @@ if (!window.dashboardInitialized) {
     addTileOverlay.style.display = "none";
   });
 
-  // Add Tile from List
-  document.querySelectorAll(".add-tile-list li").forEach(li => {
-    li.addEventListener("click", () => {
-      const type = li.getAttribute("data-tile-type");
+  // Add Tile from Selection Cards
+  document.querySelectorAll(".tile-option").forEach(option => {
+    option.addEventListener("click", () => {
+      const type = option.getAttribute("data-tile-type");
       addNewTile(type);
       addTileOverlay.style.display = "none";
     });
@@ -329,7 +329,7 @@ async function renderTile(tile) {
       const price = data?.[tile.config.coinId]?.[tile.config.currency];
       if (typeof price === 'undefined') throw new Error("Incomplete crypto data");
       tileEl.innerHTML += `
-        <i class="fas fa-bitcoin icon"></i>
+        <i class="fas fa-bitcoin-sign icon"></i>
         <h2>${capitalizeFirstLetter(tile.config.coinId)} Price</h2>
         <p>${price} ${tile.config.currency.toUpperCase()}</p>
         <div class="updated">Updated: ${new Date().toLocaleTimeString()}</div>
